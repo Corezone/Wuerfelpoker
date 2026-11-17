@@ -1,0 +1,45 @@
+# Legt automatisch ein GitHub-Release an, sobald sich APP_VERSION in server.js ändert.
+# Tag = Versionsnummer, Beschreibung aus CHANGELOG.md, ZIP wird angehängt.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: [server.js, CHANGELOG.md]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version lesen
+        id: v
+        run: echo "version=$(grep -oP "APP_VERSION = '\K[^']+" server.js)" >> "$GITHUB_OUTPUT"
+
+      - name: Gibt es das Release schon?
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.v.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Release anlegen
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.v.outputs.version }}"
+          TITLE=$(grep -m1 "^## v$V" CHANGELOG.md | sed 's/^## //')
+          awk -v v="## v$V" 'index($0, v)==1 {f=1; next} /^## v/ {f=0} f' CHANGELOG.md > notes.md
+          git archive --format=zip --prefix=wuerfelpoker/ -o "wuerfelpoker-v$V.zip" HEAD
+          gh release create "$V" "wuerfelpoker-v$V.zip" --target "$GITHUB_SHA" \
+            --title "${TITLE:-v$V}" --notes-file notes.md
