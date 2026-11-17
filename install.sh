@@ -5,8 +5,9 @@
 #  Erneut ausführen = Update (Daten bleiben erhalten).
 # =====================================================================
 set -euo pipefail
+export LC_ALL=C.UTF-8 LANG=C.UTF-8 LANGUAGE=
 
-REPO="${REPO:-DEINNAME/wuerfelpoker}"   # <- GitHub-Benutzername/Repo
+REPO="${REPO:-Corezone/wuerfelpoker}"   # <- GitHub-Benutzername/Repo
 BRANCH="${BRANCH:-main}"
 DIR="${DIR:-/opt/wuerfelpoker}"
 PORT="${PORT:-3000}"
@@ -18,7 +19,7 @@ die()  { echo -e " ${R}✘ $*${N}"; exit 1; }
 
 [ "$(id -u)" -eq 0 ] || die "Bitte als root ausführen."
 command -v apt-get >/dev/null || die "Nur Debian/Ubuntu wird unterstützt."
-case "$REPO" in Corezone/*) die "In ins.";; esac
+case "$REPO" in DEINNAME/*) die "In install.sh ist REPO noch nicht gesetzt (DEINNAME ersetzen).";; esac
 
 echo -e "\n ${B}🎲 Würfelpoker – Installation/Update${N}\n"
 

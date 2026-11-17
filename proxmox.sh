@@ -2,14 +2,15 @@
 # =====================================================================
 #  Würfelpoker – LXC-Installer für Proxmox VE
 #  In der Shell des Proxmox-HOSTS ausführen:
-#    bash -c "$(curl -fsSL https://raw.githubusercontent.com/DEINNAME/wuerfelpoker/main/proxmox.sh)"
+#    bash -c "$(curl -fsSL https://raw.githubusercontent.com/Corezone/wuerfelpoker/main/proxmox.sh)"
 #
 #  Einstellungen per Variable überschreibbar, z. B.:
 #    CTID=140 IP=192.168.50.140/24 GW=192.168.50.1 bash -c "$(curl ...)"
 # =====================================================================
 set -euo pipefail
+export LC_ALL=C.UTF-8 LANG=C.UTF-8 LANGUAGE=   # verhindert Locale-Warnungen im Container
 
-REPO="${REPO:-DEINNAME/wuerfelpoker}"   # <- GitHub-Benutzername/Repo
+REPO="${REPO:-Corezone/wuerfelpoker}"   # <- GitHub-Benutzername/Repo
 BRANCH="${BRANCH:-main}"
 
 G='\e[32m'; Y='\e[33m'; R='\e[31m'; B='\e[1m'; D='\e[2m'; N='\e[0m'
@@ -25,7 +26,7 @@ ask()  { # ask VAR "Frage" default
 
 command -v pct >/dev/null || die "Dieses Skript muss in der Shell des Proxmox-Hosts laufen."
 [ "$(id -u)" -eq 0 ] || die "Bitte als root ausführen."
-case "$REPO" in Corezone/*) die "In proxmox.";; esac
+case "$REPO" in DEINNAME/*) die "In proxmox.sh ist REPO noch nicht gesetzt (DEINNAME ersetzen).";; esac
 
 clear 2>/dev/null || true
 echo -e "${G}${B}"

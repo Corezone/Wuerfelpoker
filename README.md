@@ -38,7 +38,7 @@ oder direkt vom Proxmox-Host: `pct exec <ID> -- wuerfelpoker-update`
 **Schon vorhandener Container / anderes Debian-System** – darin ausführen:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/DEINNAME/wuerfelpoker/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Corezone/wuerfelpoker/main/install.sh)"
 ```
 
 Daten in `/opt/wuerfelpoker/data` bleiben bei Installation und Updates erhalten.
