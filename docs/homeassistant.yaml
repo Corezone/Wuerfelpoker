@@ -1,0 +1,97 @@
+# =====================================================================
+#  Würfelpoker × Home Assistant – Beispiel
+#  In der Würfelpoker-App unter Optionen → Integrationen eintragen:
+#     http://<HA-IP>:8123/api/webhook/wuerfelpoker
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 1) AUTOMATION  (Einstellungen → Automationen → Neu → YAML bearbeiten)
+#    light.DEINE_LAMPE und notify.mobile_app_... an dein Setup anpassen
+# ---------------------------------------------------------------------
+alias: "Würfelpoker – Ereignisse"
+description: "Reagiert auf Ereignisse aus der Würfelpoker-App"
+mode: queued
+triggers:
+  - trigger: webhook
+    webhook_id: wuerfelpoker
+    allowed_methods: [POST]
+    local_only: true
+actions:
+  # Ereignis an HA weiterreichen (für Sensoren, Node-RED, Dashboards …)
+  - event: wuerfelpoker
+    event_data: "{{ trigger.json }}"
+
+  - choose:
+      # 💎 GRANDE → Licht blinkt 3× gold, danach wie vorher
+      - conditions: "{{ trigger.json.event == 'grande' }}"
+        sequence:
+          - action: scene.create
+            data:
+              scene_id: wuerfelpoker_vorher
+              snapshot_entities: [light.DEINE_LAMPE]
+          - repeat:
+              count: 3
+              sequence:
+                - action: light.turn_on
+                  target: { entity_id: light.DEINE_LAMPE }
+                  data: { rgb_color: [255, 190, 0], brightness_pct: 100 }
+                - delay: { milliseconds: 600 }
+                - action: light.turn_on
+                  target: { entity_id: light.DEINE_LAMPE }
+                  data: { rgb_color: [255, 255, 255], brightness_pct: 30 }
+                - delay: { milliseconds: 400 }
+          - action: scene.turn_on
+            target: { entity_id: scene.wuerfelpoker_vorher }
+
+      # 🏆 Spielende → Benachrichtigung aufs Handy
+      - conditions: "{{ trigger.json.event == 'game_finished' }}"
+        sequence:
+          - action: notify.DEIN_NOTIFY_DIENST   # z. B. notify.mobile_app_<handyname>
+            data:
+              title: "🏆 Würfelpoker"
+              message: "{{ trigger.json.winner }} gewinnt mit {{ trigger.json.total }} Punkten!"
+
+      # 🥇 Trophäe → Benachrichtigung
+      - conditions: "{{ trigger.json.event == 'trophy' }}"
+        sequence:
+          - action: notify.DEIN_NOTIFY_DIENST
+            data:
+              title: "🏆 {{ trigger.json.tier_name }}-Trophäe"
+              message: "{{ trigger.json.player }}: {{ trigger.json.trophy }}"
+
+# ---------------------------------------------------------------------
+# 2) SENSOREN (optional, in configuration.yaml)
+#    → sensor.wuerfelpoker_fuhrender und sensor.wuerfelpoker_letztes_ereignis
+# ---------------------------------------------------------------------
+# template:
+#   - trigger:
+#       - trigger: event
+#         event_type: wuerfelpoker
+#     sensor:
+#       - name: "Würfelpoker Führender"
+#         unique_id: wuerfelpoker_fuehrender
+#         icon: mdi:crown
+#         state: >
+#           {% if trigger.event.data.event == 'game_finished' %}{{ trigger.event.data.winner }}
+#           {% elif trigger.event.data.leader is defined and trigger.event.data.leader %}{{ trigger.event.data.leader }}
+#           {% else %}{{ this.state | default('–') }}{% endif %}
+#         attributes:
+#           punkte: "{{ trigger.event.data.totals | default(this.attributes.punkte | default({})) }}"
+#       - name: "Würfelpoker letztes Ereignis"
+#         unique_id: wuerfelpoker_letztes_ereignis
+#         icon: mdi:dice-5
+#         state: "{{ trigger.event.data.event }}"
+#         attributes:
+#           daten: "{{ trigger.event.data }}"
+
+# ---------------------------------------------------------------------
+# Ereignisse und ihre Felder (JSON)
+#   game_started   players
+#   score          player, category, value, served, column, total, totals, leader
+#   grande         player, value, served, total, totals
+#   leader_changed leader, total, totals
+#   game_finished  winner, total, totals
+#   trophy         player, trophy, tier (b/s/g/p), tier_name
+#   level_up       player, level, rank
+#   test           message
+# ---------------------------------------------------------------------

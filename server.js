@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -42,6 +42,14 @@ try {
   db = JSON.parse(JSON.stringify(DEFAULT_DB));
 }
 db.users ||= []; db.sessions ||= {};
+const DEFAULT_INTEGRATIONS = {
+  ha: { url: '', events: { game_started: true, score: true, grande: true, leader_changed: true, game_finished: true, trophy: true, level_up: true } },
+  pixelit: { url: '', back: 15, events: { game_started: true, score: true, grande: true, leader_changed: true, game_finished: true, trophy: true, level_up: true } },
+};
+db.integrations = {
+  ha: { ...DEFAULT_INTEGRATIONS.ha, ...(db.integrations?.ha || {}), events: { ...DEFAULT_INTEGRATIONS.ha.events, ...(db.integrations?.ha?.events || {}) } },
+  pixelit: { ...DEFAULT_INTEGRATIONS.pixelit, ...(db.integrations?.pixelit || {}), events: { ...DEFAULT_INTEGRATIONS.pixelit.events, ...(db.integrations?.pixelit?.events || {}) } },
+};
 let saveTimer = null;
 function save(quiet) {
   if (!quiet) { db.version++; broadcast(); }
@@ -92,6 +100,85 @@ function ip(req) { return (req.headers['x-forwarded-for'] || '').split(',')[0].t
 function blocked(req) { const f = fails.get(ip(req)); return f && f.n >= 10 && Date.now() - f.t < 15 * 60e3; }
 function fail(req) { const k = ip(req), f = fails.get(k); fails.set(k, f && Date.now() - f.t < 15 * 60e3 ? { n: f.n + 1, t: f.t } : { n: 1, t: Date.now() }); }
 const validName = n => /^[\w.\-äöüÄÖÜß]{2,30}$/.test(n);
+
+// ---------- Spielwerte serverseitig berechnen ----------
+const CAT_LABEL = { 1: 'Einser', 2: 'Zweier', 3: 'Dreier', 4: 'Vierer', 5: 'Fünfer', 6: 'Sechser',
+  strasse: 'Straße', full: 'Full House', poker: 'Poker', grande: 'Grande' };
+const UPPER_K = ['1', '2', '3', '4', '5', '6'], FIG_K = ['strasse', 'full', 'poker', 'grande'];
+function playerTotalSrv(g, pid) {
+  let t = 0;
+  for (let c = 0; c < g.columns; c++) {
+    const sh = g.scores[pid]?.[c] || {};
+    const up = UPPER_K.reduce((a, k) => a + (sh[k] || 0), 0);
+    const bonus = g.bonusThreshold > 0 && up >= g.bonusThreshold ? g.bonus : 0;
+    t += (up + bonus + FIG_K.reduce((a, k) => a + (sh[k] || 0), 0)) * (g.multipliers[c] || 1);
+  }
+  return t;
+}
+const pName = pid => db.players.find(p => p.id === pid)?.name || '?';
+function totalsByName(g) { return Object.fromEntries(g.players.map(pid => [pName(pid), playerTotalSrv(g, pid)])); }
+function leadersSrv(g) {
+  const t = g.players.map(pid => [pid, playerTotalSrv(g, pid)]), max = Math.max(...t.map(x => x[1]));
+  return max > 0 ? t.filter(x => x[1] === max).map(x => x[0]) : [];
+}
+
+// ---------- Integrationen: Home Assistant & PixelIt ----------
+const rgb565 = hex => { const n = parseInt(hex.slice(1), 16); return (((n >> 16) >> 3) << 11) | ((((n >> 8) & 255) >> 2) << 5) | ((n & 255) >> 3); };
+function pixelArt(rows, pal) { return rows.join('').split('').map(ch => rgb565(pal[ch] || '#000000')); }
+const ART = {
+  die: ['.wwwwww.', 'wbwwwwbw', 'wwwwwwww', 'wwwrrwww', 'wwwrrwww', 'wwwwwwww', 'wbwwwwbw', '.wwwwww.'],
+  cup: ['.gggggg.', 'gggggggg', 'g.gggg.g', '.gggggg.', '..gggg..', '...gg...', '..gggg..', '.gggggg.'],
+  crown: ['........', 'g..gg..g', 'gg.gg.gg', 'gggggggg', 'ggrggrgg', 'gggggggg', '........', '........'],
+  up: ['...gg...', '..gggg..', '.gggggg.', 'gggggggg', '..gggg..', '..gggg..', '..gggg..', '..gggg..'],
+};
+const PAL = { w: '#FFFFFF', b: '#14281C', r: '#E0302B', g: '#FFC400' };
+const bmp = (name, pal = PAL) => ({ data: pixelArt(ART[name], pal), position: { x: 0, y: 0 }, size: { width: 8, height: 8 } });
+const TIER_HEX = { b: '#E0905A', s: '#E3E9F1', g: '#FFC400', p: '#9EDCFF' };
+function pixelitScreen(ev, d) {
+  const txt = (t, hex) => ({ textString: t, bigFont: false, scrollText: 'auto', scrollTextDelay: 35, centerText: true, position: { x: 9, y: 1 }, hexColor: hex });
+  switch (ev) {
+    case 'game_started': return { switchAnimation: { aktiv: true, animation: 'coloredBarWipe' }, bitmap: bmp('die'), text: txt('Los gehts!', '#4ADE80') };
+    case 'score': return { bitmap: bmp('die'), text: txt(`${d.player} ${d.total}`, d.served ? '#FFC400' : d.value === 0 ? '#F87171' : '#FFFFFF') };
+    case 'grande': {
+      const gold = { ...PAL, w: '#FFC400', b: '#3B2A00', r: '#FFFFFF' };
+      return { switchAnimation: { aktiv: true, animation: 'glitch' },
+        bitmapAnimation: { data: [pixelArt(ART.die, PAL), pixelArt(ART.die, gold)], size: { width: 8, height: 8 }, position: { x: 0, y: 0 }, animationDelay: 180, rubberbanding: false, limitLoops: 0 },
+        text: txt(`GRANDE! ${d.player}${d.served ? ' serviert' : ''}`, '#FFC400') };
+    }
+    case 'leader_changed': return { switchAnimation: { aktiv: true, animation: 'slide' }, bitmap: bmp('crown'), text: txt(`${d.leader} fuehrt ${d.total}`, '#FFC400') };
+    case 'game_finished': return { switchAnimation: { aktiv: true, animation: 'curtain' }, bitmap: bmp('cup'), text: txt(`${d.winner} gewinnt mit ${d.total}!`, '#FFC400') };
+    case 'trophy': return { switchAnimation: { aktiv: true, animation: 'fade' }, bitmap: bmp('cup', { ...PAL, g: TIER_HEX[d.tier] || '#FFC400' }), text: txt(`${d.player}: ${d.trophy}`, TIER_HEX[d.tier] || '#FFFFFF') };
+    case 'level_up': return { switchAnimation: { aktiv: true, animation: 'verticalSlide' }, bitmap: bmp('up', { ...PAL, g: '#4ADE80' }), text: txt(`${d.player} Level ${d.level}`, '#4ADE80') };
+  }
+}
+// PixelIt kennt keine Umlaute im Standard-Font
+const ascii = s => String(s).replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue').replace(/ß/g, 'ss').replace(/[^\x20-\x7E]/g, '');
+let clockTimer = null;
+async function post(url, data) {
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal: AbortSignal.timeout(5000) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+}
+function pixelitUrl() { let u = db.integrations.pixelit.url.trim().replace(/\/+$/, ''); if (u && !/^https?:\/\//.test(u)) u = 'http://' + u; return u; }
+async function sendPixelit(screen, holdSec) {
+  const base = pixelitUrl(); if (!base) return;
+  if (screen.text) screen.text.textString = ascii(screen.text.textString);
+  await post(base + '/api/screen', screen);
+  clearTimeout(clockTimer);
+  const back = holdSec ?? Number(db.integrations.pixelit.back);
+  if (back > 0) clockTimer = setTimeout(() => post(base + '/api/screen', { switchAnimation: { aktiv: true, animation: 'fade' }, clock: {} }).catch(() => {}), back * 1000);
+}
+function emit(ev, data = {}) {
+  const I = db.integrations, payload = { event: ev, time: new Date().toISOString(), ...data };
+  if (I.ha.url && I.ha.events[ev]) post(I.ha.url.trim(), payload).catch(e => console.error('Home Assistant:', e.message));
+  if (I.pixelit.url && I.pixelit.events[ev] && !(ev === 'score' && data.category === 'Grande' && data.value > 0 && I.pixelit.events.grande)) {
+    const hold = ev === 'game_finished' ? Math.max(30, Number(I.pixelit.back) || 0) : undefined;
+    // nacheinander anzeigen, jede Meldung mindestens 2,5 s sichtbar
+    pxChain = pxChain.then(() => sendPixelit(pixelitScreen(ev, data), hold)).catch(e => console.error('PixelIt:', e.message))
+      .then(() => new Promise(r => setTimeout(r, 2500)));
+  }
+}
+const sentNotes = new Set();
+let pxChain = Promise.resolve();
 
 // ---------- Live-Sync (Server-Sent Events) ----------
 const clients = new Set();
@@ -230,7 +317,7 @@ async function api(req, res, parts) {
 
   // GET /api/state  (ohne Benutzer/Sitzungen)
   if (parts[0] === 'state' && m === 'GET') {
-    const { users, sessions, ...pub } = db;
+    const { users, sessions, integrations, ...pub } = db;
     return send(res, 200, { ...pub, me: publicUser(user) });
   }
 
@@ -306,7 +393,9 @@ async function api(req, res, parts) {
         scores: Object.fromEntries(players.map(pid => [pid, Array.from({ length: s.columns }, () => ({}))])),
         winner: null, totals: null,
       };
-      db.games.unshift(g); save(); return send(res, 201, g);
+      db.games.unshift(g); save();
+      emit('game_started', { game_id: g.id, players: g.players.map(pName) });
+      return send(res, 201, g);
     }
     const g = db.games.find(x => x.id === parts[1]);
     if (!g) return send(res, 404, { error: 'Spiel nicht gefunden' });
@@ -315,23 +404,77 @@ async function api(req, res, parts) {
       const { player, col, cat, value } = body;
       const sheet = g.scores[player]?.[col];
       if (!sheet) return send(res, 400, { error: 'Ungültige Zelle' });
+      const leadBefore = leadersSrv(g).join(','), old = sheet[cat];
       if (value === null || value === undefined) delete sheet[cat];
       else sheet[cat] = Number(value);
-      save(); return send(res, 200, { ok: true });
+      save();
+      if (value !== null && value !== undefined && Number(value) !== old && !g.finished) {
+        const v = Number(value), fig = g.figures[cat], served = !!fig && v === fig[1] && v !== fig[0];
+        const base = { game_id: g.id, player: pName(player), category: CAT_LABEL[cat] || cat, value: v, served, column: col + 1,
+          total: playerTotalSrv(g, player), totals: totalsByName(g) };
+        const lead = leadersSrv(g);
+        emit('score', { ...base, leader: lead.length === 1 ? pName(lead[0]) : null });
+        if (cat === 'grande' && v > 0) emit('grande', base);
+        if (lead.length === 1 && g.players.length > 1 && lead.join(',') !== leadBefore && leadBefore !== '')
+          emit('leader_changed', { game_id: g.id, leader: pName(lead[0]), total: playerTotalSrv(g, lead[0]), totals: base.totals });
+      }
+      return send(res, 200, { ok: true });
     }
     if (parts[2] === 'finish' && m === 'POST') {
       g.finished = body.reopen ? null : Date.now();
       g.totals = body.totals || null;
       g.winner = body.reopen ? null : (body.winner || null);
-      save(); return send(res, 200, g);
+      save();
+      if (!body.reopen) {
+        const w = (g.winner || []).map(pName), tbn = totalsByName(g);
+        emit('game_finished', { game_id: g.id, winner: w.join(' & '), total: w.length ? tbn[w[0]] : 0, totals: tbn });
+      }
+      return send(res, 200, g);
     }
     if (m === 'DELETE') { if (adminOnly()) return; db.games = db.games.filter(x => x !== g); save(); return send(res, 200, { ok: true }); }
+  }
+
+  // Trophäen/Level-Ups vom Client (nur einmal pro Spiel/Spieler/Trophäe weiterleiten)
+  if (parts[0] === 'notify' && m === 'POST') {
+    const key = [body.game_id, body.player, body.type, body.trophy || body.level].join('|');
+    if (!sentNotes.has(key) && (body.type === 'trophy' || body.type === 'level_up')) {
+      sentNotes.add(key);
+      emit(body.type, { game_id: body.game_id, player: String(body.player || ''), trophy: body.trophy, tier: body.tier,
+        tier_name: { b: 'Bronze', s: 'Silber', g: 'Gold', p: 'Platin' }[body.tier], level: body.level, rank: body.rank });
+    }
+    return send(res, 200, { ok: true });
+  }
+
+  // Integrationen (Admin)
+  if (parts[0] === 'integrations') {
+    if (adminOnly()) return;
+    if (m === 'GET') return send(res, 200, db.integrations);
+    if (m === 'PUT') {
+      const pick = (src, def) => Object.fromEntries(Object.keys(def).map(k => [k, !!src?.[k]]));
+      db.integrations = {
+        ha: { url: String(body.ha?.url || '').trim(), events: pick(body.ha?.events, DEFAULT_INTEGRATIONS.ha.events) },
+        pixelit: { url: String(body.pixelit?.url || '').trim(), back: Math.max(0, Number(body.pixelit?.back) || 0), events: pick(body.pixelit?.events, DEFAULT_INTEGRATIONS.pixelit.events) },
+      };
+      save(true); return send(res, 200, db.integrations);
+    }
+    if (parts[1] === 'test' && m === 'POST') {
+      try {
+        if (body.target === 'ha') {
+          if (!db.integrations.ha.url) return send(res, 400, { error: 'Keine Webhook-URL gespeichert' });
+          await post(db.integrations.ha.url, { event: 'test', time: new Date().toISOString(), message: 'Würfelpoker-Test 🎲' });
+        } else {
+          if (!pixelitUrl()) return send(res, 400, { error: 'Keine PixelIt-Adresse gespeichert' });
+          await sendPixelit(pixelitScreen('grande', { player: 'Test', served: true }), 8);
+        }
+        return send(res, 200, { ok: true });
+      } catch (e) { return send(res, 502, { error: 'Nicht erreichbar: ' + e.message }); }
+    }
   }
 
   // Backup
   if (parts[0] === 'export' && m === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Disposition': 'attachment; filename="wuerfelpoker-backup.json"' });
-    const { users, sessions, ...pub } = db;
+    const { users, sessions, integrations, ...pub } = db;
     return res.end(JSON.stringify(pub, null, 2));
   }
 

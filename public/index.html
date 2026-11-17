@@ -246,9 +246,9 @@
   .crop canvas { width: 100%; height: 100%; display: block; }
   input[type=range] { width: 100%; accent-color: var(--accent); }
   .switch { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
-  .switch input { appearance: none; width: 50px; height: 28px; border-radius: 14px; background: rgba(255,255,255,.15); position: relative; cursor: pointer; transition: .2s; }
-  .switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: .2s; }
-  .switch input:checked { background: var(--accent2); } .switch input:checked::after { left: 25px; }
+  .switch input[type=checkbox] { appearance: none; width: 50px; height: 28px; border-radius: 14px; background: rgba(255,255,255,.15); position: relative; cursor: pointer; transition: .2s; }
+  .switch input[type=checkbox]::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: .2s; }
+  .switch input[type=checkbox]:checked { background: var(--accent2); } .switch input[type=checkbox]:checked::after { left: 25px; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } #bgdice { display: none; } }
 
   /* ===== Trophäen & Level ===== */
@@ -966,6 +966,9 @@ function celebrate(g) {
   document.body.appendChild(w);
   w.querySelector('button').onclick = () => { w.style.transition = 'opacity .25s'; w.style.opacity = 0; setTimeout(() => w.remove(), 250); };
   confetti(4200, 220); SFX.fanfare(); buzz([100, 50, 100, 50, 300]);
+  unlocks.forEach(([pid, t, b]) => fetch('/api/notify', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(t ? { type: 'trophy', game_id: g.id, player: pname(pid), trophy: t.name, tier: t.t }
+      : { type: 'level_up', game_id: g.id, player: pname(pid), level: b.level, rank: b.rank.title }) }).catch(() => {}));
   setTimeout(() => unlocks.forEach(([pid, t, b]) => t
     ? psNotify(t.icon, t.t, `${esc(pname(pid))} · ${TIER[t.t].name}-Trophäe freigeschaltet`, esc(t.name))
     : psNotify('⬆️', 'x', `${esc(pname(pid))} ist aufgestiegen`, `Level ${b.level} · ${b.rank.title}`)), 1600);
@@ -1125,6 +1128,41 @@ function renderPlayers() {
 }
 
 // ---------- Einstellungen ----------
+const EVN = { game_started: 'Spielstart', score: 'Punkte eingetragen', grande: 'Grande', leader_changed: 'Führungswechsel',
+  game_finished: 'Spielende / Sieger', trophy: 'Trophäe', level_up: 'Level-Aufstieg' };
+function integrationsCard() {
+  return `<div class="card"><h2>🔗 Integrationen</h2><div id="intg" class="muted">Lädt …</div></div>`;
+}
+async function bindIntegrations() {
+  const box = $('#intg'); if (!box) return;
+  const I = await call('GET', 'integrations');
+  const evs = (k, cur) => Object.keys(EVN).map(e => `<label class="switch"><span>${EVN[e]}</span><input type="checkbox" data-ev="${k}.${e}" ${cur[e] ? 'checked' : ''}></label>`).join('');
+  box.className = '';
+  box.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px"><span style="font-size:24px">🏠</span><b style="font-size:17px">Home Assistant</b></div>
+    <input type="text" id="haurl" placeholder="http://192.168.50.x:8123/api/webhook/wuerfelpoker" value="${esc(I.ha.url)}" autocapitalize="none">
+    <p class="muted" style="margin:8px 0">Webhook-URL aus einer HA-Automation mit Webhook-Auslöser. Jedes Ereignis wird als JSON gesendet.</p>
+    <details><summary class="muted" style="cursor:pointer;margin-bottom:6px">Ereignisse auswählen</summary>${evs('ha', I.ha.events)}</details>
+    <button class="btn small" id="hatest" style="margin-top:8px">📡 Test senden</button>
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px"><span style="font-size:24px">🟩</span><b style="font-size:17px">PixelIt</b></div>
+    <input type="text" id="pxurl" placeholder="IP-Adresse, z. B. 192.168.50.60" value="${esc(I.pixelit.url)}" autocapitalize="none">
+    <label class="switch" style="margin-top:6px"><span>Zurück zur Uhr nach … Sekunden (0 = nie)</span><input type="number" id="pxback" value="${I.pixelit.back}" min="0" style="width:84px;appearance:auto;height:auto;border-radius:12px"></label>
+    <details><summary class="muted" style="cursor:pointer;margin-bottom:6px">Ereignisse auswählen</summary>${evs('pixelit', I.pixelit.events)}</details>
+    <button class="btn small" id="pxtest" style="margin-top:8px">✨ Test-Animation</button>
+    <button class="btn primary" id="intsave" style="width:100%;margin-top:18px">💾 Integrationen speichern</button>`;
+  const collect = () => {
+    const ev = k => Object.fromEntries(Object.keys(EVN).map(e => [e, $(`[data-ev="${k}.${e}"]`).checked]));
+    return { ha: { url: $('#haurl').value.trim(), events: ev('ha') }, pixelit: { url: $('#pxurl').value.trim(), back: +$('#pxback').value || 0, events: ev('pixelit') } };
+  };
+  $('#intsave').onclick = async () => { await call('PUT', 'integrations', collect()); toast('Integrationen gespeichert ✓'); };
+  const test = async (target, btn) => {
+    await call('PUT', 'integrations', collect()); btn.disabled = true; const t = btn.textContent; btn.textContent = 'Sende …';
+    try { await call('POST', 'integrations/test', { target }); toast(target === 'ha' ? 'Home Assistant hat geantwortet ✓' : 'PixelIt zeigt die Test-Animation ✓'); }
+    catch {} finally { btn.disabled = false; btn.textContent = t; }
+  };
+  $('#hatest').onclick = e => test('ha', e.target); $('#pxtest').onclick = e => test('pixelit', e.target);
+}
 const versionInfo = () => `<div class="version">🎲 Würfelpoker <b>v${APP_VERSION}</b> · <a href="https://github.com/Corezone/wuerfelpoker" target="_blank" style="color:inherit">GitHub</a></div>`;
 let APP_VERSION = '';
 function fxCard() {
@@ -1217,7 +1255,7 @@ function renderSettings() {
     </div>
     <button class="btn primary" style="width:100%" id="save">💾 Speichern</button>
     <p class="muted" style="text-align:center">Änderungen gelten für neue Spiele.</p>
-    <div class="card"><h2>💾 Backup</h2><a class="btn" href="/api/export" download>⬇️ Daten exportieren (JSON)</a></div>` + versionInfo();
+    <div class="card"><h2>💾 Backup</h2><a class="btn" href="/api/export" download>⬇️ Daten exportieren (JSON)</a></div>` + integrationsCard() + versionInfo();
   $('#cols').oninput = () => {
     const n = Math.max(1, Math.min(6, +$('#cols').value || 1));
     const cur = [...app.querySelectorAll('[data-m]')].map(x => +x.value);
@@ -1232,7 +1270,7 @@ function renderSettings() {
     });
     toast('Gespeichert ✓');
   };
-  bindAccount();
+  bindAccount(); bindIntegrations();
 }
 
 // ---------- Navigation ----------
