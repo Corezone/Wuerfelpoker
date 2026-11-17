@@ -217,8 +217,6 @@
   @keyframes ripple { to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
   .roll { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
     background: radial-gradient(circle, rgba(15,74,46,.7), rgba(0,0,0,.85)); backdrop-filter: blur(4px); animation: fadein .2s; }
-  .roll svg { width: 58px; height: 58px; filter: drop-shadow(0 10px 14px #000a); animation: tumble .45s linear infinite; }
-  .roll svg:nth-child(2n) { animation-duration: .38s; animation-direction: reverse; }
   .roll .t { width: 100%; text-align: center; font: 800 26px var(--display); color: var(--gold); }
   @keyframes tumble { 0% { transform: rotate(0) translateY(0); } 50% { transform: rotate(180deg) translateY(-26px); } 100% { transform: rotate(360deg) translateY(0); } }
   @keyframes fadein { from { opacity: 0; } }
@@ -393,11 +391,94 @@
   .hgame .hp.win b { color: var(--gold); }
   .version { text-align: center; color: var(--muted); font-size: 12px; margin: 20px 0 6px; }
   .version b { color: var(--gold); }
+
+  /* ===== v1.6: 3D ===== */
+  .cube { display: block; position: relative; width: var(--s); height: var(--s); transform-style: preserve-3d; flex-shrink: 0; }
+  .cube .f { display: block; }
+  .opttabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; padding: 5px; margin-bottom: 14px;
+    border-radius: 18px; background: rgba(0,0,0,.28); border: 1px solid var(--line); }
+  .ot { border: 0; background: none; color: var(--muted); font: 600 12px "Inter", sans-serif; padding: 9px 4px 8px; border-radius: 13px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px; position: relative; overflow: hidden; transition: .2s; }
+  .ot span { font-size: 20px; filter: grayscale(.6) opacity(.75); transition: .2s; }
+  .ot.on { color: #1b1405; background: linear-gradient(160deg, #f6dc87, #d4a73a); box-shadow: 0 4px 0 #8a6420, 0 6px 14px rgba(231,195,90,.3), inset 0 1px 0 rgba(255,255,255,.6); transform: translateY(-2px); }
+  .ot.on span { filter: none; }
+  .cube .f { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 22%; overflow: hidden;
+    box-shadow: inset 0 0 calc(var(--s) * .12) rgba(0,0,0,.18); }
+  .cube .f .die { width: 100%; height: 100%; filter: none; }
+  .cube .f1 { transform: rotateY(0deg) translateZ(calc(var(--s) / 2)); }
+  .cube .f6 { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
+  .cube .f3 { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); }
+  .cube .f4 { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
+  .cube .f2 { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); }
+  .cube .f5 { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
+  .scene { perspective: 600px; display: inline-block; }
+  .cube.idle { animation: idle 9s ease-in-out infinite; }
+  @keyframes idle { 0%, 70%, 100% { transform: rotateX(-18deg) rotateY(28deg); } 80% { transform: rotateX(-18deg) rotateY(388deg); } }
+  .cube.spin { animation: spin3d 14s linear infinite; }
+  @keyframes spin3d { from { transform: rotateX(-20deg) rotateY(0deg) rotateZ(5deg); } to { transform: rotateX(340deg) rotateY(360deg) rotateZ(365deg); } }
+  header h1 .scene { margin-right: 2px; }
+  header h1 b { text-shadow: 0 1px 0 #b8862a, 0 2px 0 #8a6420, 0 4px 8px rgba(0,0,0,.5); }
+  .login .scene { display: block; width: 92px; margin: 0 auto 18px; filter: drop-shadow(0 18px 18px rgba(0,0,0,.55)); }
+  #bgdice span { opacity: .09; perspective: 500px; animation-name: drift; }
+  #bgdice .cube { animation: spin3d linear infinite; }
+
+  /* Würfelwurf in 3D */
+  .roll { perspective: 900px; align-content: center; row-gap: 26px; }
+  .roll .t { margin-top: 4px; }
+  .roll .scene { perspective: 700px; }
+  .roll .cube .f { box-shadow: inset 0 0 10px rgba(0,0,0,.25); }
+  .roll .shadow { width: 60px; height: 12px; border-radius: 50%; background: rgba(0,0,0,.45); filter: blur(6px); margin: 10px auto 0; }
+
+  /* Neigen & Glanz */
+  .tilt { transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0); transition: transform .25s ease-out, box-shadow .25s; will-change: transform; }
+  .tilt.tilting { transition: transform .06s linear; }
+  .tilt::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.22), transparent 55%); }
+  .tilt.tilting::after { opacity: 1; }
+  .sb, .pcard, .hgame, .lb { overflow: hidden; }
+
+  /* Tasten & Chips mit Tiefe */
+  .btn { box-shadow: 0 4px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08); transform: translateY(0); transition: transform .08s, box-shadow .08s, background .15s; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08); }
+  .btn.primary { box-shadow: 0 5px 0 #7d5a17, 0 10px 22px rgba(212,167,58,.3), inset 0 1px 0 rgba(255,255,255,.55); }
+  .btn.primary:active { transform: translateY(4px); box-shadow: 0 1px 0 #7d5a17, 0 4px 10px rgba(212,167,58,.25), inset 0 1px 0 rgba(255,255,255,.55); }
+  .btn.danger { box-shadow: 0 4px 0 #4a1010; }
+  .cv { box-shadow: 0 3px 0 rgba(0,0,0,.5), 0 5px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.12); transition: transform .08s, box-shadow .08s; }
+  td.cell:active .cv { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12); }
+  td.cell.serv .cv { box-shadow: 0 3px 0 #8a6420, 0 0 16px rgba(242,207,99,.5), inset 0 1px 0 rgba(255,255,255,.6); }
+  td.cell.struck .cv { box-shadow: 0 3px 0 rgba(90,20,20,.8); }
+  td.cell.empty .cv { box-shadow: none; }
+  .opt { box-shadow: 0 5px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1); transition: transform .08s, box-shadow .08s; }
+  .opt:active { transform: translateY(4px) scale(1); box-shadow: 0 1px 0 rgba(0,0,0,.45); }
+  .opt.s { box-shadow: 0 5px 0 #6b4e12, 0 0 18px rgba(242,207,99,.25), inset 0 1px 0 rgba(255,255,255,.2); }
+  nav button.active { box-shadow: 0 4px 0 #8a6420, 0 6px 16px rgba(231,195,90,.35), inset 0 1px 0 rgba(255,255,255,.6); transform: translateY(-2px); }
+  .card { box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 0 rgba(0,0,0,.25), 0 14px 34px rgba(0,0,0,.35); }
+
+  /* Zahlen mit Prägung */
+  .sb.lead .tt, tr.total td.lead, .podium-card h2, .winner-banner { text-shadow: 0 1px 0 #b8862a, 0 2px 0 #8a6420, 0 3px 0 #6b4e12, 0 6px 12px rgba(0,0,0,.6); }
+  .sb .tt { text-shadow: 0 1px 0 rgba(0,0,0,.5), 0 2px 0 rgba(0,0,0,.35), 0 5px 10px rgba(0,0,0,.45); }
+
+  /* 3D-Podest */
+  .podium { perspective: 700px; }
+  .podium .block { position: relative; transform: rotateX(14deg); transform-origin: bottom; box-shadow: inset 0 3px 0 rgba(255,255,255,.55), inset 0 -10px 18px rgba(0,0,0,.25), 0 14px 28px rgba(0,0,0,.6); }
+  .podium .block::before { content: ""; position: absolute; left: 0; right: 0; top: -14px; height: 14px; border-radius: 12px 12px 0 0;
+    background: inherit; filter: brightness(1.25); transform: perspective(200px) rotateX(55deg); transform-origin: bottom; }
+  .podium .pl .avatar { animation: bob 2.4s ease-in-out infinite; }
+  .podium .p1 .avatar { animation-delay: .3s; }
+  @keyframes bob { 50% { transform: translateY(-5px); } }
+
+  /* Trophäen drehen sich herein */
+  .tro .ic { transform-style: preserve-3d; animation: flipin .7s cubic-bezier(.2,1.2,.4,1) backwards; animation-delay: calc(var(--i, 0) * 45ms); }
+  @keyframes flipin { from { transform: perspective(400px) rotateY(-120deg) scale(.6); opacity: 0; } }
+  .tro:not(.locked) .ic::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 45%, transparent 60%); background-size: 250% 100%; animation: sheen 4s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 200ms); }
+  @keyframes sheen { 0%, 60% { background-position: 150% 0; } 100% { background-position: -100% 0; } }
+  .psn .ic { animation: flipin .8s cubic-bezier(.2,1.2,.4,1); }
 </style>
 </head>
 <body>
 <header>
-  <h1><img class="logo" src="/icon.svg" alt=""><span>Würfel<b>poker</b></span></h1>
+  <h1><span id="hlogo"></span><span>Würfel<b>poker</b></span></h1>
   <span id="who"></span>
   <div class="dot" id="dot" title="Live-Verbindung"></div>
 </header>
@@ -428,6 +509,8 @@ const FIGICON = { strasse: 'S', full: 'F', poker: 'P', grande: 'G' };
 const PIPS = { 1: [[50,50]], 2: [[28,28],[72,72]], 3: [[28,28],[50,50],[72,72]], 4: [[28,28],[72,28],[28,72],[72,72]],
   5: [[28,28],[72,28],[50,50],[28,72],[72,72]], 6: [[28,25],[72,25],[28,50],[72,50],[28,75],[72,75]] };
 const die = n => `<svg class="die" viewBox="0 0 100 100"><rect x="4" y="4" width="92" height="92" rx="22" fill="#fbf7ec"/><rect x="4" y="4" width="92" height="92" rx="22" fill="none" stroke="#0002" stroke-width="3"/>${PIPS[n].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9.5" fill="${n === 1 ? '#c0392b' : '#14281c'}"/>`).join('')}</svg>`;
+const FACE_ROT = { 1: [0, 0], 6: [0, 180], 3: [0, -90], 4: [0, 90], 2: [-90, 0], 5: [90, 0] };
+const cube3d = (size, cls = '') => `<span class="scene"><span class="cube ${cls}" style="--s:${size}px">${[1, 2, 3, 4, 5, 6].map(n => `<span class="f f${n}">${die(n)}</span>`).join('')}</span></span>`;
 const catIcon = c => c.n ? die(c.n) : `<span class="fig">${FIGICON[c.k]}</span>`;
 const COLORS = ['#f2cf63', '#7dd3fc', '#f9a8d4', '#86efac', '#fdba74', '#c4b5fd', '#fca5a5', '#5eead4'];
 function pcolor(pid) { const i = db.players.findIndex(p => p.id === pid); return COLORS[(i < 0 ? 0 : i) % COLORS.length]; }
@@ -624,11 +707,19 @@ function rollDice(text = 'Würfel fallen …') {
   return new Promise(res => {
     if (FX.reduced) return res();
     const o = document.createElement('div'); o.className = 'roll';
-    const faces = () => Array.from({ length: 5 }, () => die(1 + Math.floor(Math.random() * 6))).join('');
-    o.innerHTML = faces() + `<div class="t">${text}</div>`; document.body.appendChild(o);
+    o.innerHTML = Array.from({ length: 5 }, () => `<div>${cube3d(58)}<div class="shadow"></div></div>`).join('') + `<div class="t">${text}</div>`;
+    document.body.appendChild(o);
     rattle(14); buzz([15, 30, 15, 30, 15]);
-    const iv = setInterval(() => { o.innerHTML = faces() + `<div class="t">${text}</div>`; }, 120);
-    setTimeout(() => { clearInterval(iv); o.style.transition = 'opacity .25s'; o.style.opacity = 0; setTimeout(() => { o.remove(); res(); }, 250); }, 1000);
+    o.querySelectorAll('.cube').forEach((c, i) => {
+      const n = 1 + Math.floor(Math.random() * 6), [ex, ey] = FACE_ROT[n], sx = 720 + Math.random() * 720, sy = 720 + Math.random() * 720;
+      c.animate([
+        { transform: `translateY(-220px) rotateX(${ex + sx}deg) rotateY(${ey + sy}deg) rotateZ(${Math.random() * 360}deg)`, offset: 0 },
+        { transform: `translateY(0) rotateX(${ex + 90}deg) rotateY(${ey + 45}deg) rotateZ(10deg)`, offset: .6 },
+        { transform: `translateY(-26px) rotateX(${ex + 20}deg) rotateY(${ey + 10}deg) rotateZ(0deg)`, offset: .8 },
+        { transform: `translateY(0) rotateX(${ex - 12}deg) rotateY(${ey + 12}deg)`, offset: 1 },
+      ], { duration: 1050 + i * 70, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' });
+    });
+    setTimeout(() => { o.style.transition = 'opacity .3s'; o.style.opacity = 0; setTimeout(() => { o.remove(); res(); }, 300); }, 1650);
   });
 }
 function countUp(el, from, to, ms = 650) {
@@ -641,16 +732,37 @@ function countUp(el, from, to, ms = 650) {
 // Hintergrund: schwebende Würfel
 (function () {
   const bg = document.getElementById('bgdice');
+  document.getElementById('hlogo').innerHTML = cube3d(28, 'idle');
   for (let i = 0; i < 9; i++) {
-    const sp = document.createElement('span'); sp.innerHTML = die(1 + (i % 6));
+    const sp = document.createElement('span'); const sz0 = 30 + Math.random() * 40; sp.innerHTML = cube3d(Math.round(sz0));
+    sp.querySelector('.cube').style.animationDuration = (12 + Math.random() * 16) + 's';
     sp.style.left = (i * 11 + Math.random() * 6) + '%'; sp.style.animationDuration = (28 + Math.random() * 30) + 's';
-    sp.style.animationDelay = (-Math.random() * 50) + 's'; const sz = 40 + Math.random() * 60; sp.style.width = sp.style.height = sz + 'px';
+    sp.style.animationDelay = (-Math.random() * 50) + 's'; sp.style.width = sp.style.height = Math.round(sz0) + 'px';
     bg.appendChild(sp);
   }
 })();
+// 3D-Neigen mit Glanz für Karten
+(function () {
+  let cur = null;
+  const reset = el => { el.classList.remove('tilting'); el.style.setProperty('--rx', '0deg'); el.style.setProperty('--ry', '0deg'); };
+  document.addEventListener('pointermove', e => {
+    if (FX.reduced) return;
+    const t = e.target.closest('.tilt');
+    if (cur && cur !== t) { reset(cur); cur = null; }
+    if (!t) return;
+    const r = t.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    const max = t.dataset.tilt ? +t.dataset.tilt : 10;
+    t.classList.add('tilting'); cur = t;
+    t.style.setProperty('--ry', ((x - .5) * max * 2).toFixed(2) + 'deg'); t.style.setProperty('--rx', ((.5 - y) * max * 2).toFixed(2) + 'deg');
+    t.style.setProperty('--mx', (x * 100) + '%'); t.style.setProperty('--my', (y * 100) + '%');
+  }, { passive: true });
+  const end = () => { if (cur) { reset(cur); cur = null; } };
+  document.addEventListener('pointerleave', end); document.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') end(); });
+  document.addEventListener('pointercancel', end);
+})();
 // Ripple bei jedem Tippen
 document.addEventListener('pointerdown', e => {
-  const t = e.target.closest('.btn, .opt, .chip, .pcard, .tab, nav button, .sb'); if (!t || FX.reduced) return;
+  const t = e.target.closest('.btn, .opt, .chip, .pcard, .tab, nav button, .sb, .ot'); if (!t || FX.reduced) return;
   const r = t.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2, s = document.createElement('span');
   s.className = 'ripple'; s.style.width = s.style.height = d + 'px';
   s.style.left = (e.clientX - r.left) + 'px'; s.style.top = (e.clientY - r.top) + 'px';
@@ -690,7 +802,7 @@ function authScreen(mode) {
   document.body.classList.add('locked'); $('#who').textContent = '';
   if (es) { es.close(); es = null; }
   const setup = mode === 'setup';
-  app.innerHTML = `<div class="card login"><img class="logo" src="/icon.svg" alt="">
+  app.innerHTML = `<div class="card login">${cube3d(92, 'spin')}
     <h2 style="text-align:center">${setup ? 'Willkommen! Admin-Konto anlegen' : 'Anmelden'}</h2>
     ${setup ? '<p class="muted" style="text-align:center">Das ist der erste Start. Mit diesem Konto kannst du später weitere Benutzer anlegen.</p>' : ''}
     <form id="lf">
@@ -778,7 +890,7 @@ function renderGame() {
   const top = totsNow[0][1];
   h += '<div class="board">' + g.players.map(pid => {
     const t = playerTotal(g, pid), place = totsNow.findIndex(x => x[1] === t) + 1, isLead = lead.includes(pid) && g.players.length > 1;
-    return `<div class="sb ${isLead ? 'lead' : ''} ${turn === pid ? 'turn' : ''}"><span class="place">${place}.</span>
+    return `<div class="sb tilt ${isLead ? 'lead' : ''} ${turn === pid ? 'turn' : ''}" data-tilt="12"><span class="place">${place}.</span>
       ${lvlAvatar(pid)}<div class="nm">${isLead ? '👑 ' : ''}${esc(pname(pid))}</div><div class="tt" data-sbtot="${pid}">${prevTot[g.id + '|' + pid] ?? t}</div>
       <div class="gap">${isLead ? 'in Führung' : t === top ? 'gleichauf' : `−${top - t} zur Spitze`}</div>${turn === pid ? '<span class="turnbadge">🎲 am Zug</span>' : ''}</div>`; }).join('') + '</div>';
   if (g.columns > 1) {
@@ -874,7 +986,7 @@ function renderNewGame() {
   let h = `<div class="card"><h2>🎲 Neues Spiel</h2>
     <div class="muted">${ps.length ? 'Wer spielt mit? In Spielreihenfolge antippen.' : 'Leg zuerst die Spieler an.'}</div>
     <div class="pgrid">${ps.map(p => { const i = selPlayers.indexOf(p.id), pr = progOf(p.id);
-      return `<div class="pcard ${i >= 0 ? 'on' : ''}" data-id="${p.id}">${i >= 0 ? `<span class="ordb">${i + 1}</span>` : ''}${lvlAvatar(p.id)}
+      return `<div class="pcard tilt ${i >= 0 ? 'on' : ''}" data-id="${p.id}" data-tilt="14">${i >= 0 ? `<span class="ordb">${i + 1}</span>` : ''}${lvlAvatar(p.id)}
         <div class="nm">${esc(p.name)}</div><div class="rk">${pr.rank.title}</div></div>`; }).join('')}</div>
     <div class="row inrow" style="margin-bottom:14px"><input type="text" id="np" placeholder="Neuer Spieler …"><button class="btn" id="addp">＋</button></div>
     <div class="rules"><span><b>${s.columns}</b> Spalte${s.columns > 1 ? 'n' : ''} ×${s.multipliers.join('/')}</span><span>Straße <b>${s.figures.strasse.join('/')}</b></span>
@@ -957,7 +1069,7 @@ function celebrate(g) {
     if (a && b.level > a.level) unlocks.push([pid, null, b]);
   }
   const w = document.createElement('div'); w.className = 'podium-wrap';
-  w.innerHTML = `<div class="card podium-card"><h2>🏆 ${(g.winner || [ranked[0]]).map(pname).map(esc).join(' & ')}</h2>
+  w.innerHTML = `<div class="card podium-card tilt" data-tilt="6"><h2>🏆 ${(g.winner || [ranked[0]]).map(pname).map(esc).join(' & ')}</h2>
     <div class="muted">gewinnt mit ${tot[ranked[0]]} Punkten!</div>
     <div class="podium">${order.map((pid, i) => pid ? `<div class="pl p${[2, 1, 3][i]}">${avatar(pid)}<b>${esc(pname(pid))}</b>
       <span class="pts">${tot[pid]}</span><span class="xpgain">+${xpGain[pid] || 0} XP</span><div class="block">${[2, 1, 3][i]}</div></div>` : '').join('')}</div>
@@ -1037,7 +1149,7 @@ function renderTrophies() {
   const list = ps.map(p => ({ p, s: progOf(p.id) })).sort((a, b) => b.s.total - a.s.total);
   app.innerHTML = `<div class="card"><h2>🏆 Rangliste</h2>${list.map(({ p, s }, i) => {
     const pct = Math.round((s.total - XPNEED(s.level)) / (XPNEED(s.level + 1) - XPNEED(s.level)) * 100);
-    return `<div class="lb" data-tp="${p.id}"><div class="pos">${['🥇', '🥈', '🥉'][i] || i + 1}</div>${lvlAvatar(p.id, 'lg')}
+    return `<div class="lb tilt" data-tp="${p.id}" data-tilt="5"><div class="pos">${['🥇', '🥈', '🥉'][i] || i + 1}</div>${lvlAvatar(p.id, 'lg')}
       <div class="grow"><b>${esc(p.name)}</b> <span class="title">${s.rank.title}</span>
         <div class="cups" style="margin-top:4px">${cupsHtml(s.count)}<span class="muted" style="font-size:12px;margin-left:auto">${s.total} XP</span></div>
         <div class="xpbar"><i style="width:${pct}%"></i></div></div></div>`; }).join('')}</div>
@@ -1057,7 +1169,7 @@ function renderTrophyProfile(pid) {
   const tro = [...TROPHIES].sort((a, b) => (s.earned.has(b.id) - s.earned.has(a.id)) || order[a.t] - order[b.t]);
   const nextRank = RANKS.find(r => r[0] > s.level);
   app.innerHTML = `<button class="btn small" id="tback" style="margin-bottom:12px">‹ Rangliste</button>
-    <div class="card prof">${lvlAvatar(pid)}<h2>${esc(pname(pid))}</h2><div class="rank">${s.rank.title}</div>
+    <div class="card prof tilt" data-tilt="5">${lvlAvatar(pid)}<h2>${esc(pname(pid))}</h2><div class="rank">${s.rank.title}</div>
       <div class="cups">${cupsHtml(s.count)}</div>
       <div class="xpinfo"><span>Level ${s.level}</span><span>${s.total} / ${nxt} XP</span><span>Level ${s.level + 1}</span></div>
       <div class="xpbar" style="height:10px"><i style="width:${pct}%"></i></div>
@@ -1065,7 +1177,7 @@ function renderTrophyProfile(pid) {
     <div class="card"><h2>Trophäen</h2>${tro.map(t => {
       const got = s.earned.has(t.id), v = Math.min(t.val(s) || 0, t.goal);
       const rare = Math.round(Object.values(PROG).filter(x => x.earned.has(t.id)).length / active * 100);
-      return `<div class="tro ${got ? '' : 'locked'}"><div class="ic tier-${t.t}">${got ? t.icon : '🔒'}${cup(t.t, 20)}</div>
+      return `<div class="tro ${got ? '' : 'locked'}" style="--i:${tro.indexOf(t)}"><div class="ic tier-${t.t}">${got ? t.icon : '🔒'}${cup(t.t, 20)}</div>
         <div class="grow"><div class="nm">${t.name}</div><div class="ds">${t.desc}</div>
         <div class="meta">${got ? `<span style="color:${TIER[t.t].col}">✓ ${TIER[t.t].name}</span>` : `<div class="xpbar"><i style="width:${v / t.goal * 100}%"></i></div><span>${v}/${t.goal}</span>`}
           <span>${rare}% der Spieler</span></div></div></div>`; }).join('')}</div>`;
@@ -1082,7 +1194,7 @@ function renderHistory() {
     const tot = g.finished && g.totals ? g.totals : Object.fromEntries(g.players.map(pid => [pid, playerTotal(g, pid)]));
     const ranked = [...g.players].sort((a, b) => tot[b] - tot[a]);
     const day = dayName(g.created), head = day !== lastDay ? `<div class="dayhead">${day}</div>` : ''; lastDay = day;
-    return `${head}<div class="card hgame game-item" data-g="${g.id}">
+    return `${head}<div class="card hgame game-item tilt" data-g="${g.id}" data-tilt="4">
       <div class="top"><span>🕒 ${new Date(g.created).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })}</span>
         ${g.finished ? '<span class="badge">beendet</span>' : '<span class="badge open">läuft</span>'}<span class="grow"></span>
         ${me.admin ? `<button class="btn small danger" data-del="${g.id}">🗑</button>` : ''}</div>
@@ -1131,7 +1243,7 @@ function renderPlayers() {
 const EVN = { game_started: 'Spielstart', score: 'Punkte eingetragen', grande: 'Grande', leader_changed: 'Führungswechsel',
   game_finished: 'Spielende / Sieger', trophy: 'Trophäe', level_up: 'Level-Aufstieg' };
 function integrationsCard() {
-  return `<div class="card"><h2>🔗 Integrationen</h2><div id="intg" class="muted">Lädt …</div></div>`;
+  return `<div class="card"><h2>🔗 Integrationen</h2><p class="muted" style="margin-top:0">Nur für Admins sichtbar. Die App sendet Ereignisse an deine Geräte – was dort passiert, legst du selbst fest.</p><div id="intg" class="muted">Lädt …</div></div>`;
 }
 async function bindIntegrations() {
   const box = $('#intg'); if (!box) return;
@@ -1196,8 +1308,7 @@ function accountCard() {
 }
 const INP = 'background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;width:100%';
 async function bindAccount() {
-  bindFx();
-  if (authOff) return;
+  if (authOff || !$('#logout')) return;
   $('#logout').onclick = async () => { await fetch('/api/auth/logout', { method: 'POST' }); me = null; db = null; showLogin(); };
   $('#pwsave').onclick = async () => {
     await call('POST', 'auth/password', { old: $('#pwo').value, new: $('#pwn').value });
@@ -1228,16 +1339,20 @@ async function bindAccount() {
   loadUsers();
 }
 
+let optTab = 'general';
 function renderSettings() {
-  const s = db.settings;
-  if (!me.admin) {
-    app.innerHTML = fxCard() + accountCard() + `<div class="card muted">Spielregeln kann nur ein Admin ändern.<br>
-      ${s.columns} Spalte(n) ×${s.multipliers.join(', ×')} · Straße ${s.figures.strasse.join('/')} · Full ${s.figures.full.join('/')} · Poker ${s.figures.poker.join('/')} · Grande ${s.figures.grande.join('/')}</div>`;
-    app.innerHTML += versionInfo();
-    return bindAccount();
-  }
+  const s = db.settings, admin = me.admin;
+  const tabs = [['general', '✨', 'Allgemein'], ['rules', '🎯', 'Regeln'], ['account', '👤', 'Konto']];
+  if (admin) tabs.push(['integrations', '🔗', 'Integrationen']);
+  if (!tabs.some(t => t[0] === optTab)) optTab = 'general';
+  let h = `<div class="opttabs">${tabs.map(([k, i, l]) => `<button class="ot ${optTab === k ? 'on' : ''}" data-ot="${k}"><span>${i}</span>${l}</button>`).join('')}</div>`;
   const figNames = { strasse: 'Straße', full: 'Full House', poker: 'Poker', grande: 'Grande' };
-  app.innerHTML = fxCard() + accountCard() + `<div class="card"><h2>🧮 Spalten</h2>
+  if (optTab === 'general') h += fxCard() + (admin ? `<div class="card"><h2>💾 Backup</h2><p class="muted" style="margin-top:0">Spiele, Spieler und Einstellungen als JSON-Datei.</p><a class="btn" href="/api/export" download>⬇️ Daten exportieren</a></div>` : '');
+  if (optTab === 'account') h += accountCard();
+  if (optTab === 'rules' && !admin) h += `<div class="card"><h2>🎯 Spielregeln</h2><p class="muted" style="margin-top:0">Die Regeln kann nur ein Admin ändern.</p>
+    <div class="rules"><span><b>${s.columns}</b> Spalte${s.columns > 1 ? 'n' : ''} ×${s.multipliers.join('/')}</span><span>Straße <b>${s.figures.strasse.join('/')}</b></span>
+    <span>Full <b>${s.figures.full.join('/')}</b></span><span>Poker <b>${s.figures.poker.join('/')}</b></span><span>Grande <b>${s.figures.grande.join('/')}</b></span></div></div>`;
+  if (optTab === 'rules' && admin) h += `<div class="card"><h2>🧮 Spalten</h2>
       <div class="row"><span class="grow">Anzahl Spalten pro Spieler</span><input type="number" id="cols" min="1" max="6" value="${s.columns}"></div>
       <div class="muted" style="margin:12px 0 6px">Multiplikator je Spalte</div>
       <div class="row" id="mults">${s.multipliers.map((m, i) => `<label class="muted">S${i + 1} <input type="number" data-m="${i}" value="${m}" step="1"></label>`).join('')}</div>
@@ -1253,24 +1368,32 @@ function renderSettings() {
         <span>Bonuspunkte</span><input type="number" id="bv" value="${s.bonus}">
       </div>
     </div>
-    <button class="btn primary" style="width:100%" id="save">💾 Speichern</button>
-    <p class="muted" style="text-align:center">Änderungen gelten für neue Spiele.</p>
-    <div class="card"><h2>💾 Backup</h2><a class="btn" href="/api/export" download>⬇️ Daten exportieren (JSON)</a></div>` + integrationsCard() + versionInfo();
-  $('#cols').oninput = () => {
-    const n = Math.max(1, Math.min(6, +$('#cols').value || 1));
-    const cur = [...app.querySelectorAll('[data-m]')].map(x => +x.value);
-    $('#mults').innerHTML = Array.from({ length: n }, (_, i) => `<label class="muted">S${i + 1} <input type="number" data-m="${i}" value="${cur[i] ?? i + 1}"></label>`).join('');
-  };
-  $('#save').onclick = async () => {
-    const figures = {};
-    app.querySelectorAll('[data-f]').forEach(x => { (figures[x.dataset.f] ||= [0, 0])[+x.dataset.i] = +x.value; });
-    await call('PUT', 'settings', {
-      columns: +$('#cols').value, multipliers: [...app.querySelectorAll('[data-m]')].map(x => +x.value),
-      figures, bonusThreshold: +$('#bt').value, bonus: +$('#bv').value,
-    });
-    toast('Gespeichert ✓');
-  };
-  bindAccount(); bindIntegrations();
+    <button class="btn primary" style="width:100%" id="save">💾 Regeln speichern</button>
+    <p class="muted" style="text-align:center">Änderungen gelten für neue Spiele.</p>`;
+  if (optTab === 'integrations' && admin) h += integrationsCard();
+  app.innerHTML = h + versionInfo();
+
+  app.querySelectorAll('[data-ot]').forEach(b => b.onclick = () => { optTab = b.dataset.ot; renderSettings();
+    if (!FX.reduced) app.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' }); });
+  bindFx();
+  if (optTab === 'account') bindAccount();
+  if (optTab === 'integrations') bindIntegrations();
+  if (optTab === 'rules' && admin) {
+    $('#cols').oninput = () => {
+      const n = Math.max(1, Math.min(6, +$('#cols').value || 1));
+      const cur = [...app.querySelectorAll('[data-m]')].map(x => +x.value);
+      $('#mults').innerHTML = Array.from({ length: n }, (_, i) => `<label class="muted">S${i + 1} <input type="number" data-m="${i}" value="${cur[i] ?? i + 1}"></label>`).join('');
+    };
+    $('#save').onclick = async () => {
+      const figures = {};
+      app.querySelectorAll('[data-f]').forEach(x => { (figures[x.dataset.f] ||= [0, 0])[+x.dataset.i] = +x.value; });
+      await call('PUT', 'settings', {
+        columns: +$('#cols').value, multipliers: [...app.querySelectorAll('[data-m]')].map(x => +x.value),
+        figures, bonusThreshold: +$('#bt').value, bonus: +$('#bv').value,
+      });
+      toast('Gespeichert ✓');
+    };
+  }
 }
 
 // ---------- Navigation ----------

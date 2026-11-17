@@ -116,8 +116,8 @@ echo -e "
  ${G}${B}🎲 Fertig! Würfelpoker läuft in Container $CTID.${N}
 
    Öffnen:    ${B}http://${CT_IP:-<IP>}:$PORT${N}
-   Update:    In der Container-Konsole ${B}wuerfelpoker-update${N}
-              oder vom Host: ${B}pct exec $CTID -- wuerfelpoker-update${N}
+   Update:    In der Container-Konsole einfach ${B}update${N}
+              oder vom Host: ${B}pct exec $CTID -- update${N}
 
    Beim ersten Aufruf legst du dein Admin-Konto an.
 "

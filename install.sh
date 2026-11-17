@@ -42,7 +42,7 @@ curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" | tar xz
 [ -f "$TMP/server.js" ] || die "server.js nicht im Repository gefunden."
 
 UPDATE=0; [ -f "$DIR/server.js" ] && UPDATE=1
-ver() { grep -o "APP_VERSION = '[^']*'" "$1" 2>/dev/null | cut -d"'" -f2; }
+ver() { grep -o "APP_VERSION = '[^']*'" "$1" 2>/dev/null | cut -d"'" -f2 || true; }
 OLDV=$(ver "$DIR/server.js"); NEWV=$(ver "$TMP/server.js")
 mkdir -p "$DIR/data"
 rm -rf "$DIR/public"
@@ -68,12 +68,14 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
-# Update-Befehl für später
-cat > /usr/local/bin/wuerfelpoker-update <<EOF
+# Update-Befehl für später: einfach "update" eintippen
+cat > /usr/local/bin/update <<EOF
 #!/usr/bin/env bash
+# Würfelpoker aktualisieren
 REPO="$REPO" BRANCH="$BRANCH" PORT="$PORT" bash -c "\$(curl -fsSL https://raw.githubusercontent.com/$REPO/$BRANCH/install.sh)"
 EOF
-chmod +x /usr/local/bin/wuerfelpoker-update
+chmod +x /usr/local/bin/update
+ln -sf /usr/local/bin/update /usr/local/bin/wuerfelpoker-update   # alter Name funktioniert weiter
 
 systemctl daemon-reload
 systemctl enable wuerfelpoker >/dev/null 2>&1
@@ -96,5 +98,5 @@ else
   echo -e " ${G}${B}✅ Installation fertig!${N}  v${NEWV:-?}"
 fi
 echo -e "\n   Öffnen:   ${B}http://${IP:-<IP>}:$PORT${N}"
-echo -e "   Update:   ${B}wuerfelpoker-update${N}"
+echo -e "   Update:   ${B}update${N}"
 echo -e "   Log:      journalctl -u wuerfelpoker -f\n"

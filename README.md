@@ -14,6 +14,7 @@ Alle Geräte synchronisieren sich live: Einer trägt am Handy ein, der Fernseher
 - Trophäen-System im PlayStation-Stil: XP, Level, Ränge, 21 Trophäen (Bronze/Silber/Gold/Platin), Avatar-Rahmen als Belohnung – wird rückwirkend aus allen beendeten Spielen berechnet
 - Home Assistant: Webhook mit allen Ereignissen (Punkte, Grande, Führung, Sieger, Trophäen) – Beispiel in `docs/homeassistant.yaml`
 - PixelIt: Punkte, GRANDE-Animation, Führungswechsel und Sieger auf der LED-Matrix, danach zurück zur Uhr
+- 3D-Würfel, Karten mit Neige-Effekt, Tasten mit Tiefe, 3D-Podest
 - Profilbilder pro Spieler (hochladen und zuschneiden)
 - Effekte: Würfelrollen beim Spielstart, schwebende Punkte, Funken, Grande-Banner mit Konfetti, Siegerpodest, Sounds und Vibration (pro Gerät abschaltbar)
 - Daten liegen in `data/db.json`, Profilbilder in `data/avatars/`, Backup-Export in den Einstellungen
@@ -33,10 +34,10 @@ Das Skript fragt ein paar Einstellungen ab (Enter = Standard), lädt die Debian-
 **Update** – in der Konsole des Containers:
 
 ```bash
-wuerfelpoker-update
+update
 ```
 
-oder direkt vom Proxmox-Host: `pct exec <ID> -- wuerfelpoker-update`
+oder direkt vom Proxmox-Host: `pct exec <ID> -- update` (der alte Befehl `wuerfelpoker-update` funktioniert weiterhin)
 
 **Schon vorhandener Container / anderes Debian-System** – darin ausführen:
 
