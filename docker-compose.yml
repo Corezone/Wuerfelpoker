@@ -1,0 +1,11 @@
+services:
+  wuerfelpoker:
+    build: .
+    container_name: wuerfelpoker
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      - TZ=Europe/Vienna
