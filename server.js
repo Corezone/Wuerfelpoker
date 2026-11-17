@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+const APP_VERSION = '1.4.0';
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -112,7 +113,7 @@ function readBody(req) {
   });
 }
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css',
-  '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
+  '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
 
 function serveStatic(req, res) {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -139,7 +140,7 @@ async function api(req, res, parts) {
   // ----- Auth (ohne Login erreichbar) -----
   if (parts[0] === 'auth') {
     const action = parts[1];
-    if (action === 'status') return send(res, 200, { setup: !AUTH_OFF && db.users.length === 0, authOff: AUTH_OFF, user: publicUser(currentUser(req)) });
+    if (action === 'status') return send(res, 200, { version: APP_VERSION, setup: !AUTH_OFF && db.users.length === 0, authOff: AUTH_OFF, user: publicUser(currentUser(req)) });
     if (action === 'setup' && m === 'POST') {
       if (db.users.length) return send(res, 403, { error: 'Setup bereits erledigt' });
       const username = String(body.username || '').trim();
@@ -348,4 +349,4 @@ http.createServer(async (req, res) => {
     console.error(e);
     send(res, 500, { error: 'Serverfehler' });
   }
-}).listen(PORT, () => console.log(`🎲 Würfelpoker läuft auf http://0.0.0.0:${PORT}`));
+}).listen(PORT, () => console.log(`🎲 Würfelpoker v${APP_VERSION} läuft auf http://0.0.0.0:${PORT}`));

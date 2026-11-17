@@ -42,6 +42,8 @@ curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" | tar xz
 [ -f "$TMP/server.js" ] || die "server.js nicht im Repository gefunden."
 
 UPDATE=0; [ -f "$DIR/server.js" ] && UPDATE=1
+ver() { grep -o "APP_VERSION = '[^']*'" "$1" 2>/dev/null | cut -d"'" -f2; }
+OLDV=$(ver "$DIR/server.js"); NEWV=$(ver "$TMP/server.js")
 mkdir -p "$DIR/data"
 rm -rf "$DIR/public"
 cp -r "$TMP/server.js" "$TMP/public" "$DIR/"
@@ -89,9 +91,9 @@ ok "Server läuft"
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 echo
 if [ "$UPDATE" -eq 1 ]; then
-  echo -e " ${G}${B}✅ Update fertig!${N}"
+  echo -e " ${G}${B}✅ Update fertig!${N}  ${OLDV:+v$OLDV → }v${NEWV:-?}"
 else
-  echo -e " ${G}${B}✅ Installation fertig!${N}"
+  echo -e " ${G}${B}✅ Installation fertig!${N}  v${NEWV:-?}"
 fi
 echo -e "\n   Öffnen:   ${B}http://${IP:-<IP>}:$PORT${N}"
 echo -e "   Update:   ${B}wuerfelpoker-update${N}"

@@ -11,16 +11,23 @@
 <link rel="apple-touch-icon" href="/icon.svg">
 <title>Würfelpoker</title>
 <style>
+  @font-face { font-family: "Playfair Display"; font-weight: 700; font-display: swap; src: url(/fonts/playfair-display-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Playfair Display"; font-weight: 900; font-display: swap; src: url(/fonts/playfair-display-latin-900-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(/fonts/inter-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url(/fonts/inter-latin-500-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(/fonts/inter-latin-600-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 700; font-display: swap; src: url(/fonts/inter-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 800; font-display: swap; src: url(/fonts/inter-latin-800-normal.woff2) format("woff2"); }
   :root {
     --bg: #0b1f15; --card: rgba(10, 28, 19, .72); --card2: rgba(255,255,255,.05); --line: rgba(255,255,255,.09);
     --text: #f3efe2; --muted: #a9b8a8; --accent: #e7c35a; --accent2: #b8902c; --felt: #0f4a2e;
     --gold: #f2cf63; --red: #f87171; --radius: 18px; --ivory: #fbf7ec;
-    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --display: "Playfair Display", "Iowan Old Style", Georgia, serif;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html { background: #061710; }
   body { margin: 0; color: var(--text); min-height: 100vh;
-    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 16px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     background:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
       radial-gradient(ellipse 120% 80% at 50% 0%, #17603c 0%, #0c3b25 45%, #061710 100%) fixed;
@@ -300,6 +307,92 @@
   @keyframes psin { from { transform: translateX(-120%); opacity: 0; } }
   @keyframes psout { to { transform: translateX(-120%); opacity: 0; } }
   .xpgain { font: 800 13px system-ui; color: #4ade80; }
+
+  /* ===== Design v1.4 ===== */
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1;
+    background: radial-gradient(ellipse 140% 100% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%); }
+  .card { position: relative; }
+  .card::before { content: ""; position: absolute; left: 18px; right: 18px; top: -1px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(242,207,99,.55), transparent); }
+  h2 { font-weight: 900; letter-spacing: .3px; }
+  header h1 { font-weight: 900; font-size: 23px; }
+  .btn, nav button, .tab, .opt small, input { font-family: inherit; }
+  .opt { font-family: var(--display); font-weight: 900; }
+
+  /* Scoreboard */
+  body { font-variant-numeric: lining-nums; }
+  .board { display: flex; gap: 8px; overflow-x: auto; margin: 0 0 14px; padding: 4px 2px 8px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .board::-webkit-scrollbar { display: none; }
+  .sb { flex: 1 1 0; min-width: 104px; max-width: 220px; scroll-snap-align: start; position: relative; border-radius: 18px; padding: 14px 12px 12px;
+    text-align: center; background: linear-gradient(170deg, rgba(255,255,255,.08), rgba(0,0,0,.25)); border: 1px solid var(--line);
+    box-shadow: 0 8px 22px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.07); transition: .3s; }
+  .sb.lead { border-color: rgba(242,207,99,.7); background: linear-gradient(170deg, rgba(242,207,99,.22), rgba(0,0,0,.25));
+    box-shadow: 0 8px 26px rgba(242,207,99,.18), inset 0 1px 0 rgba(255,255,255,.12); }
+  .sb .place { position: absolute; left: 10px; top: 8px; font: 800 13px "Inter"; color: var(--muted); }
+  .sb.lead .place { color: var(--gold); }
+  .sb .avatar { width: 44px; height: 44px; font-size: 18px; }
+  .sb .nm { font-weight: 700; font-size: 14px; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sb .tt { font: 900 28px/1.1 var(--display); font-variant-numeric: lining-nums tabular-nums; color: var(--ivory); font-variant-numeric: tabular-nums; }
+  .sb.lead .tt { color: var(--gold); text-shadow: 0 0 18px rgba(242,207,99,.4); }
+  .sb .gap { font-size: 11.5px; color: var(--muted); }
+  .sb.turn { border-color: #4ade80; box-shadow: 0 0 0 1px #4ade80, 0 8px 24px rgba(74,222,128,.18); }
+  .turnbadge { display: inline-block; margin-top: 6px; font-size: 10.5px; font-weight: 800; color: #052e16; background: #4ade80;
+    padding: 2px 7px; border-radius: 999px; box-shadow: 0 0 12px rgba(74,222,128,.6); animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 2px rgba(74,222,128,.2); transform: scale(.95); } }
+
+  /* Tabelle: Abschnitte & Chips */
+  tr.sec td { background: transparent !important; border-bottom: 0; height: auto; padding: 14px 12px 6px; text-align: left;
+    font: 700 11px/1 "Inter", sans-serif; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); position: static; }
+  tr.sec td span { opacity: .8; }
+  td.cell { padding: 5px 4px; }
+  .cv { display: inline-grid; place-items: center; min-width: 46px; height: 36px; padding: 0 8px; border-radius: 11px;
+    background: linear-gradient(170deg, rgba(255,255,255,.1), rgba(255,255,255,.03)); border: 1px solid rgba(255,255,255,.08);
+    font: 800 17px/1 "Inter", sans-serif; font-variant-numeric: tabular-nums; color: var(--ivory); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+  td.cell.empty .cv { background: transparent; border: 1.5px dashed rgba(255,255,255,.13); box-shadow: none; color: rgba(255,255,255,.22); font-size: 18px; font-weight: 500; }
+  td.cell.empty:hover .cv { border-color: rgba(242,207,99,.5); color: var(--gold); }
+  td.cell.struck .cv { background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.3); color: var(--red); font-size: 15px; }
+  td.cell.serv .cv { background: linear-gradient(160deg, #fbe7a1, #d4a73a); border-color: #f6dc87; color: #2a1d05; box-shadow: 0 0 14px rgba(242,207,99,.45); }
+  td.cell.serv { color: inherit; text-shadow: none; }
+  td.cell.turncol { background: rgba(74,222,128,.045); }
+  td.cell.turncol.empty .cv { border-color: rgba(74,222,128,.35); color: rgba(74,222,128,.7); }
+  th.turn .ph > span:last-child::after { content: " 🎲"; }
+
+  /* Neues Spiel: Spielerkarten */
+  .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 10px; margin: 12px 0 16px; }
+  .pcard { position: relative; border-radius: 16px; padding: 14px 6px 10px; text-align: center; cursor: pointer; user-select: none;
+    background: rgba(255,255,255,.05); border: 1.5px solid var(--line); transition: .2s; overflow: hidden; }
+  .pcard:active { transform: scale(.96); }
+  .pcard .avatar { width: 50px; height: 50px; font-size: 20px; }
+  .pcard .nm { font-weight: 700; font-size: 14px; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pcard .rk { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { color: #1b1405; }
+  .badge.open { color: var(--gold); }
+  .og { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .og:last-child { border-bottom: 0; }
+  .stack { display: flex; } .stack .avatar { width: 34px; height: 34px; font-size: 14px; margin-left: -10px; border: 2px solid #0b1f15; }
+  .stack .avatar:first-child { margin-left: 0; }
+  tr.total td, .podium .block, .podium .pts, .stats b, .opt, .floater { font-variant-numeric: lining-nums; }
+  .pcard.on { border-color: var(--gold); background: linear-gradient(170deg, rgba(242,207,99,.2), rgba(242,207,99,.04)); box-shadow: 0 6px 20px rgba(242,207,99,.15); }
+  .pcard .ordb { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--gold); color: #1b1405; font: 900 12px "Inter"; animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
+  .rules { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .rules span { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--muted); }
+  .rules b { color: var(--ivory); font-weight: 700; }
+
+  /* Verlauf */
+  .dayhead { font: 700 11px "Inter"; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); margin: 18px 4px 8px; }
+  .dayhead:first-child { margin-top: 0; }
+  .hgame { cursor: pointer; padding: 14px; margin-bottom: 10px; }
+  .hgame .top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
+  .hgame .ppl { display: flex; gap: 6px; overflow-x: auto; }
+  .hgame .hp { flex: 1; min-width: 64px; text-align: center; padding: 8px 4px; border-radius: 12px; background: rgba(0,0,0,.2); }
+  .hgame .hp.win { background: linear-gradient(170deg, rgba(242,207,99,.22), rgba(242,207,99,.05)); box-shadow: inset 0 0 0 1px rgba(242,207,99,.45); }
+  .hgame .hp .avatar { width: 34px; height: 34px; font-size: 14px; }
+  .hgame .hp .n { font-size: 12px; font-weight: 600; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hgame .hp b { font: 900 17px var(--display); display: block; font-variant-numeric: lining-nums; }
+  .hgame .hp.win b { color: var(--gold); }
+  .version { text-align: center; color: var(--muted); font-size: 12px; margin: 20px 0 6px; }
+  .version b { color: var(--gold); }
 </style>
 </head>
 <body>
@@ -557,7 +650,7 @@ function countUp(el, from, to, ms = 650) {
 })();
 // Ripple bei jedem Tippen
 document.addEventListener('pointerdown', e => {
-  const t = e.target.closest('.btn, .opt, .chip, .tab, nav button'); if (!t || FX.reduced) return;
+  const t = e.target.closest('.btn, .opt, .chip, .pcard, .tab, nav button, .sb'); if (!t || FX.reduced) return;
   const r = t.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2, s = document.createElement('span');
   s.className = 'ripple'; s.style.width = s.style.height = d + 'px';
   s.style.left = (e.clientX - r.left) + 'px'; s.style.top = (e.clientY - r.top) + 'px';
@@ -623,7 +716,7 @@ function authScreen(mode) {
 const showLogin = () => authScreen('login');
 async function start() {
   const st = await (await fetch('/api/auth/status')).json();
-  authOff = st.authOff;
+  authOff = st.authOff; APP_VERSION = st.version || '';
   if (st.setup) return authScreen('setup');
   if (!st.user) return showLogin();
   me = st.user;
@@ -673,19 +766,27 @@ function renderGame() {
   if (!g) return renderNewGame();
   currentGameId = g.id; localStorage.setItem('gameId', g.id);
   if (colTab >= g.columns) colTab = 0;
-  const lead = leaders(g), c = colTab;
+  const lead = leaders(g), c = colTab, turn = g.finished ? null : nextPlayer(g);
 
   let h = '';
   if (g.finished) {
     h += `<div class="card winner-banner"><span class="trophy">🏆</span>${g.winner ? g.winner.map(pname).map(esc).join(' & ') : '–'} gewinnt!
           <div class="muted" style="font-weight:400;font-size:13px">Spiel vom ${fmtDate(g.created)} – beendet</div></div>`;
   }
+  // Scoreboard
+  const totsNow = g.players.map(pid => [pid, playerTotal(g, pid)]).sort((a, b) => b[1] - a[1]);
+  const top = totsNow[0][1];
+  h += '<div class="board">' + g.players.map(pid => {
+    const t = playerTotal(g, pid), place = totsNow.findIndex(x => x[1] === t) + 1, isLead = lead.includes(pid) && g.players.length > 1;
+    return `<div class="sb ${isLead ? 'lead' : ''} ${turn === pid ? 'turn' : ''}"><span class="place">${place}.</span>
+      ${lvlAvatar(pid)}<div class="nm">${isLead ? '👑 ' : ''}${esc(pname(pid))}</div><div class="tt" data-sbtot="${pid}">${prevTot[g.id + '|' + pid] ?? t}</div>
+      <div class="gap">${isLead ? 'in Führung' : t === top ? 'gleichauf' : `−${top - t} zur Spitze`}</div>${turn === pid ? '<span class="turnbadge">🎲 am Zug</span>' : ''}</div>`; }).join('') + '</div>';
   if (g.columns > 1) {
     h += '<div class="tabs">' + Array.from({ length: g.columns }, (_, i) =>
       `<div class="tab ${i === c ? 'on' : ''}" data-col="${i}">Spalte ${i + 1} <small>×${g.multipliers[i]}</small></div>`).join('') + '</div>';
   }
   h += '<div class="tablewrap"><table><thead><tr><th class="cat"></th>' +
-    g.players.map(pid => `<th class="${lead.includes(pid) ? 'lead' : ''}" data-th="${pid}"><div class="ph">${lvlAvatar(pid)}<span>${lead.includes(pid) ? '👑 ' : ''}${esc(pname(pid))}</span></div></th>`).join('') +
+    g.players.map(pid => `<th class="${lead.includes(pid) ? 'lead' : ''} ${turn === pid ? 'turn' : ''}" data-th="${pid}"><div class="ph">${avatar(pid)}<span>${esc(pname(pid))}</span></div></th>`).join('') +
     '</tr></thead><tbody>';
 
   const row = cat => {
@@ -693,21 +794,25 @@ function renderGame() {
       (cat.fig ? `<small>${g.figures[cat.k][0]} / ${g.figures[cat.k][1]} serviert</small>` : '') + '</div></div></td>';
     for (const pid of g.players) {
       const v = g.scores[pid][c]?.[cat.k];
-      let cls = 'cell', txt = '·';
+      let cls = 'cell', txt = '+';
       if (v === undefined) cls += ' empty';
       else if (v === 0) { cls += ' struck'; txt = '✕'; }
       else { txt = v; if (cat.fig && v === g.figures[cat.k][1] && v !== g.figures[cat.k][0]) cls += ' serv'; }
       if (lastCell === `${pid}|${c}|${cat.k}`) cls += ' flash pop';
       if (lead.includes(pid) && g.players.length > 1) cls += ' leadcol';
-      r += `<td class="${cls}" data-p="${pid}" data-k="${cat.k}">${txt}</td>`;
+      if (turn === pid) cls += ' turncol';
+      r += `<td class="${cls}" data-p="${pid}" data-k="${cat.k}"><span class="cv">${txt}</span></td>`;
     }
     return r + '</tr>';
   };
+  const sec = (t, sub) => `<tr class="sec"><td colspan="${g.players.length + 1}">${t} <span>· ${sub}</span></td></tr>`;
+  h += sec('Augen', 'Einser bis Sechser');
   UPPER.forEach(x => h += row(x));
   const calcs = g.players.map(pid => colCalc(g, pid, c));
   if (g.bonusThreshold > 0) {
     h += `<tr class="sum"><td class="cat">Bonus <small>ab ${g.bonusThreshold}</small></td>` + calcs.map(k => `<td>${k.upper} ${k.bonus ? '+' + k.bonus : ''}</td>`).join('') + '</tr>';
   }
+  h += sec('Figuren', 'gewürfelt / serviert');
   FIGS.forEach(x => h += row(x));
   h += `<tr class="sum"><td class="cat">Spalte ${g.columns > 1 ? c + 1 : ''}</td>` + calcs.map(k => `<td>${k.sum}${g.multipliers[c] !== 1 ? ` ×${g.multipliers[c]} = <b style="color:var(--text)">${k.total}</b>` : ''}</td>`).join('') + '</tr>';
   h += '<tr class="total"><td class="cat">Gesamt</td>' + g.players.map(pid => { const key = g.id + '|' + pid;
@@ -726,7 +831,9 @@ function renderGame() {
     tb.querySelectorAll('tr').forEach((tr, i) => tr.style.setProperty('--i', i)); setTimeout(() => tb.classList.remove('stagger'), 1200); }
   // Punkte hochzählen
   app.querySelectorAll('[data-tot]').forEach(td => { const pid = td.dataset.tot, key = g.id + '|' + pid, now = playerTotal(g, pid);
-    if (prevTot[key] !== undefined && prevTot[key] !== now) countUp(td, prevTot[key], now); else td.textContent = now; prevTot[key] = now; });
+    const sb = app.querySelector(`[data-sbtot="${pid}"]`);
+    if (prevTot[key] !== undefined && prevTot[key] !== now) { countUp(td, prevTot[key], now); sb && countUp(sb, prevTot[key], now); }
+    else { td.textContent = now; if (sb) sb.textContent = now; } prevTot[key] = now; });
   // Führungswechsel
   const leadKey = lead.join(',');
   if (prevLead[g.id] !== undefined && prevLead[g.id] !== leadKey && lead.length === 1 && g.players.length > 1 && !g.finished) {
@@ -751,26 +858,37 @@ function renderGame() {
   $('#newgame').onclick = () => { currentGameId = 'new'; localStorage.removeItem('gameId'); selPlayers = [...g.players]; renderNewGame(); };
 }
 
+// wer ist am Zug? → Spieler (in Reihenfolge) mit den wenigsten ausgefüllten Feldern
+function nextPlayer(g) {
+  let best = null, min = Infinity;
+  for (const pid of g.players) {
+    let f = 0; for (let c = 0; c < g.columns; c++) f += colCalc(g, pid, c).filled;
+    if (f < min) { min = f; best = pid; }
+  }
+  return min >= CATS.length * g.columns ? null : best;
+}
+
 function renderNewGame() {
   const ps = activePlayers();
   const s = db.settings;
-  let h = `<div class="card"><h2>Neues Spiel</h2>
-    <div class="muted">Spieler in Reihenfolge antippen:</div><div class="chips">` +
-    (ps.length ? ps.map(p => { const i = selPlayers.indexOf(p.id);
-      return `<div class="chip ${i >= 0 ? 'on' : ''}" data-id="${p.id}">${avatar(p.id)}${esc(p.name)}${i >= 0 ? `<span class="ord">${i + 1}</span>` : ''}</div>`; }).join('')
-      : '<span class="muted">Noch keine Spieler – unten hinzufügen.</span>') +
-    `</div>
-    <div class="row inrow" style="margin-bottom:14px"><input type="text" id="np" placeholder="Neuer Spieler"><button class="btn" id="addp">Hinzufügen</button></div>
-    <div class="muted" style="margin-bottom:12px">${s.columns} Spalte${s.columns > 1 ? 'n' : ''} (×${s.multipliers.join(', ×')}) · Straße ${s.figures.strasse.join('/')} · Full ${s.figures.full.join('/')} · Poker ${s.figures.poker.join('/')} · Grande ${s.figures.grande.join('/')}</div>
-    <button class="btn primary" style="width:100%" id="start" ${selPlayers.length ? '' : 'disabled'}>🎲 Spiel starten</button></div>`;
+  let h = `<div class="card"><h2>🎲 Neues Spiel</h2>
+    <div class="muted">${ps.length ? 'Wer spielt mit? In Spielreihenfolge antippen.' : 'Leg zuerst die Spieler an.'}</div>
+    <div class="pgrid">${ps.map(p => { const i = selPlayers.indexOf(p.id), pr = progOf(p.id);
+      return `<div class="pcard ${i >= 0 ? 'on' : ''}" data-id="${p.id}">${i >= 0 ? `<span class="ordb">${i + 1}</span>` : ''}${lvlAvatar(p.id)}
+        <div class="nm">${esc(p.name)}</div><div class="rk">${pr.rank.title}</div></div>`; }).join('')}</div>
+    <div class="row inrow" style="margin-bottom:14px"><input type="text" id="np" placeholder="Neuer Spieler …"><button class="btn" id="addp">＋</button></div>
+    <div class="rules"><span><b>${s.columns}</b> Spalte${s.columns > 1 ? 'n' : ''} ×${s.multipliers.join('/')}</span><span>Straße <b>${s.figures.strasse.join('/')}</b></span>
+      <span>Full <b>${s.figures.full.join('/')}</b></span><span>Poker <b>${s.figures.poker.join('/')}</b></span><span>Grande <b>${s.figures.grande.join('/')}</b></span></div>
+    <button class="btn primary" style="width:100%;padding:15px;font-size:17px" id="start" ${selPlayers.length ? '' : 'disabled'}>🎲 Spiel starten${selPlayers.length ? ` · ${selPlayers.length} Spieler` : ''}</button></div>`;
   const open = db.games.filter(g => !g.finished);
   if (open.length) {
-    h += '<div class="card"><h2>Laufende Spiele</h2>' + open.map(g =>
-      `<div class="list-item game-item" data-g="${g.id}"><div class="grow">${g.players.map(pname).map(esc).join(', ')}<div class="muted">${fmtDate(g.created)}</div></div>›</div>`).join('') + '</div>';
+    h += '<div class="card"><h2>⏳ Laufende Spiele</h2>' + open.map(g =>
+      `<div class="og game-item" data-g="${g.id}"><div class="stack">${g.players.map(pid => avatar(pid)).join('')}</div>
+        <div class="grow"><b>${g.players.map(pname).map(esc).join(', ')}</b><div class="muted">${fmtDate(g.created)}</div></div><span style="font-size:22px;color:var(--gold)">›</span></div>`).join('') + '</div>';
   }
   app.innerHTML = h;
   selPlayers = selPlayers.filter(id => ps.some(p => p.id === id));
-  app.querySelectorAll('.chip').forEach(ch => ch.onclick = () => {
+  app.querySelectorAll('.pcard').forEach(ch => ch.onclick = () => {
     const id = ch.dataset.id; const i = selPlayers.indexOf(id);
     i >= 0 ? selPlayers.splice(i, 1) : selPlayers.push(id); renderNewGame();
   });
@@ -954,14 +1072,20 @@ function renderTrophyProfile(pid) {
 // ---------- Verlauf ----------
 function renderHistory() {
   if (!db.games.length) { app.innerHTML = '<div class="card empty-state"><span class="big">📜</span>Noch keine Spiele gespielt.</div>'; return; }
-  app.innerHTML = '<div class="card"><h2>Verlauf</h2>' + db.games.map(g => {
+  const dayName = ts => { const d = new Date(ts), t = new Date(); t.setHours(0, 0, 0, 0); const diff = Math.round((t - new Date(d).setHours(0, 0, 0, 0)) / 864e5);
+    return diff === 0 ? 'Heute' : diff === 1 ? 'Gestern' : d.toLocaleDateString('de-AT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); };
+  let lastDay = '';
+  app.innerHTML = '<h2 style="margin:4px 4px 14px">📜 Verlauf</h2>' + db.games.map(g => {
     const tot = g.finished && g.totals ? g.totals : Object.fromEntries(g.players.map(pid => [pid, playerTotal(g, pid)]));
     const ranked = [...g.players].sort((a, b) => tot[b] - tot[a]);
-    return `<div class="list-item game-item" data-g="${g.id}"><div class="grow">
-      <div>${ranked.map(pid => `${(g.winner || []).includes(pid) ? '🏆 ' : ''}${esc(pname(pid))} <b>${tot[pid]}</b>`).join(' · ')}</div>
-      <div class="muted">${fmtDate(g.created)} ${g.finished ? '' : '<span class="badge open">läuft</span>'}</div></div>
-      ${me.admin ? `<button class="btn small danger" data-del="${g.id}">🗑</button>` : ''}</div>`;
-  }).join('') + '</div>';
+    const day = dayName(g.created), head = day !== lastDay ? `<div class="dayhead">${day}</div>` : ''; lastDay = day;
+    return `${head}<div class="card hgame game-item" data-g="${g.id}">
+      <div class="top"><span>🕒 ${new Date(g.created).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })}</span>
+        ${g.finished ? '<span class="badge">beendet</span>' : '<span class="badge open">läuft</span>'}<span class="grow"></span>
+        ${me.admin ? `<button class="btn small danger" data-del="${g.id}">🗑</button>` : ''}</div>
+      <div class="ppl">${ranked.map(pid => `<div class="hp ${(g.winner || []).includes(pid) ? 'win' : ''}">${avatar(pid)}
+        <div class="n">${(g.winner || []).includes(pid) ? '👑 ' : ''}${esc(pname(pid))}</div><b>${tot[pid]}</b></div>`).join('')}</div></div>`;
+  }).join('');
   app.querySelectorAll('.game-item').forEach(el => el.onclick = e => {
     if (e.target.dataset.del) return;
     currentGameId = el.dataset.g; colTab = 0; view = 'game'; render();
@@ -1001,8 +1125,10 @@ function renderPlayers() {
 }
 
 // ---------- Einstellungen ----------
+const versionInfo = () => `<div class="version">🎲 Würfelpoker <b>v${APP_VERSION}</b> · <a href="https://github.com/Corezone/wuerfelpoker" target="_blank" style="color:inherit">GitHub</a></div>`;
+let APP_VERSION = '';
 function fxCard() {
-  return `<div class="card"><h2>Effekte</h2>
+  return `<div class="card"><h2>✨ Effekte</h2>
     <label class="switch"><span>🔊 Sounds</span><input type="checkbox" id="fxs" ${FX.sound ? 'checked' : ''}></label>
     <label class="switch"><span>📳 Vibration</span><input type="checkbox" id="fxv" ${FX.vib ? 'checked' : ''}></label>
     <div class="muted">Gilt nur für dieses Gerät.</div>
@@ -1016,14 +1142,14 @@ function bindFx() {
 }
 function accountCard() {
   if (authOff) return '<div class="card muted">Login ist deaktiviert (AUTH=off).</div>';
-  return `<div class="card"><h2>Mein Konto</h2>
+  return `<div class="card"><h2>👤 Mein Konto</h2>
     <div class="row" style="margin-bottom:12px"><span class="grow">Angemeldet als <b>${esc(me.username)}</b>${me.admin ? '<span class="tag">Admin</span>' : ''}</span>
       <button class="btn small" id="logout">Abmelden</button></div>
     <div class="muted" style="margin-bottom:6px">Passwort ändern</div>
     <input type="password" id="pwo" placeholder="Altes Passwort" autocomplete="current-password" style="${INP};margin-bottom:8px">
     <input type="password" id="pwn" placeholder="Neues Passwort (min. 6 Zeichen)" autocomplete="new-password" style="${INP};margin-bottom:8px">
     <button class="btn" id="pwsave">Passwort ändern</button></div>
-    ${me.admin ? `<div class="card"><h2>Benutzer</h2><div id="ulist" class="muted">Lädt…</div>
+    ${me.admin ? `<div class="card"><h2>👥 Benutzer</h2><div id="ulist" class="muted">Lädt…</div>
       <div class="muted" style="margin:12px 0 6px">Neuer Benutzer</div>
       <input type="text" id="nu" placeholder="Benutzername" autocapitalize="none" style="margin-bottom:8px">
       <input type="password" id="nup" placeholder="Passwort (min. 6 Zeichen)" autocomplete="new-password" style="${INP};margin-bottom:8px">
@@ -1069,20 +1195,21 @@ function renderSettings() {
   if (!me.admin) {
     app.innerHTML = fxCard() + accountCard() + `<div class="card muted">Spielregeln kann nur ein Admin ändern.<br>
       ${s.columns} Spalte(n) ×${s.multipliers.join(', ×')} · Straße ${s.figures.strasse.join('/')} · Full ${s.figures.full.join('/')} · Poker ${s.figures.poker.join('/')} · Grande ${s.figures.grande.join('/')}</div>`;
+    app.innerHTML += versionInfo();
     return bindAccount();
   }
   const figNames = { strasse: 'Straße', full: 'Full House', poker: 'Poker', grande: 'Grande' };
-  app.innerHTML = fxCard() + accountCard() + `<div class="card"><h2>Spalten</h2>
+  app.innerHTML = fxCard() + accountCard() + `<div class="card"><h2>🧮 Spalten</h2>
       <div class="row"><span class="grow">Anzahl Spalten pro Spieler</span><input type="number" id="cols" min="1" max="6" value="${s.columns}"></div>
       <div class="muted" style="margin:12px 0 6px">Multiplikator je Spalte</div>
       <div class="row" id="mults">${s.multipliers.map((m, i) => `<label class="muted">S${i + 1} <input type="number" data-m="${i}" value="${m}" step="1"></label>`).join('')}</div>
     </div>
-    <div class="card"><h2>Punkte für Figuren</h2>
+    <div class="card"><h2>🎯 Punkte für Figuren</h2>
       <div class="settings-grid"><span></span><span class="h">gewürfelt</span><span class="h">serviert</span>
       ${Object.keys(figNames).map(k => `<span>${figNames[k]}</span><input type="number" data-f="${k}" data-i="0" value="${s.figures[k][0]}"><input type="number" data-f="${k}" data-i="1" value="${s.figures[k][1]}">`).join('')}
       </div>
     </div>
-    <div class="card"><h2>Bonus (optional)</h2>
+    <div class="card"><h2>🎁 Bonus (optional)</h2>
       <div class="settings-grid" style="grid-template-columns:1fr auto">
         <span>Bonus ab Punkten (Einser–Sechser), 0 = aus</span><input type="number" id="bt" value="${s.bonusThreshold}">
         <span>Bonuspunkte</span><input type="number" id="bv" value="${s.bonus}">
@@ -1090,7 +1217,7 @@ function renderSettings() {
     </div>
     <button class="btn primary" style="width:100%" id="save">💾 Speichern</button>
     <p class="muted" style="text-align:center">Änderungen gelten für neue Spiele.</p>
-    <div class="card"><h2>Backup</h2><a class="btn" href="/api/export" download>⬇️ Daten exportieren (JSON)</a></div>`;
+    <div class="card"><h2>💾 Backup</h2><a class="btn" href="/api/export" download>⬇️ Daten exportieren (JSON)</a></div>` + versionInfo();
   $('#cols').oninput = () => {
     const n = Math.max(1, Math.min(6, +$('#cols').value || 1));
     const cur = [...app.querySelectorAll('[data-m]')].map(x => +x.value);
