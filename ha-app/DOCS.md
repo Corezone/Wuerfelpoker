@@ -24,6 +24,18 @@ Wer die App ohne Home Assistant öffnen will (z. B. auf einem Tablet am Spieltis
 
 Spiele, Spieler, Profilbilder, Konten und Integrationen werden übernommen.
 
+## 📷 Kamera-Erkennung (Prototyp)
+
+Im Spiel auf **„📷 Würfe mit Kamera erkennen“** tippen.
+
+1. **Einmal anlernen:** alle Würfel mit derselben Seite nach oben hinlegen, Seite wählen, „Erfassen“ – für jede Seite (9, 10, B, D, K, A).
+2. **Würfeln:** Handy von oben über die Würfel halten. Sobald sie ruhig liegen, werden sie erkannt und passende Einträge vorgeschlagen.
+3. Vorschlag antippen – fertig. Der nächste Spieler ist automatisch dran.
+
+Tipps: helle Würfel auf dunklem, nicht glänzendem Untergrund, gutes Licht, Würfel nicht aneinander.
+Die Kamera funktioniert nur über **HTTPS** (z. B. Home-Assistant-App mit Nabu Casa).
+Das ist ein Prototyp – Ergebnis vor dem Antippen kurz prüfen.
+
 ## 💡 Lichteffekte
 
 Unter **Optionen → Integrationen → Lichteffekte** legst du fest, was deine Lampen bei welchem Wurf machen:

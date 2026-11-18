@@ -389,6 +389,7 @@
   .hgame .hp .n { font-size: 12px; font-weight: 600; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hgame .hp b { font: 900 17px var(--display); display: block; font-variant-numeric: lining-nums; }
   .hgame .hp.win b { color: var(--gold); }
+  .fig.pk { background: linear-gradient(160deg, #fbf7ec, #d9cfb4); color: #14281c; font-size: 11px; letter-spacing: -.5px; }
   .version { text-align: center; color: var(--muted); font-size: 12px; margin: 20px 0 6px; }
   .version b { color: var(--gold); }
 
@@ -498,6 +499,50 @@
   .litem small { display: block; color: var(--muted); font-size: 11.5px; }
   .swatch { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; background: conic-gradient(red, orange, yellow, lime, cyan, blue, magenta, red); }
   .swatch.mono { background: linear-gradient(#fff6cf, #d8c69a); }
+
+  /* ===== Kamera (Prototyp) ===== */
+  .dc-proto { display: inline-block; font: 800 10px "Inter", sans-serif; letter-spacing: 1.5px; padding: 3px 8px; border-radius: 999px;
+    background: repeating-linear-gradient(135deg, #facc15 0 8px, #eab308 8px 16px); color: #1b1405; vertical-align: middle; }
+  .camb { width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  #dicecam { position: fixed; inset: 0; z-index: 70; background: #000; display: flex; flex-direction: column; animation: fadein .2s; }
+  .dc-top { display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 14px 10px; background: rgba(8,26,18,.95); }
+  .dc-top b { flex: 1; font-family: var(--display); font-size: 18px; }
+  .dc-view { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  .dc-view video { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
+  .dc-opts { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+  .dc-seg { display: flex; align-items: center; gap: 3px; padding: 3px; border-radius: 12px; background: rgba(0,0,0,.3); border: 1px solid var(--line); }
+  .dc-seg span { font-size: 11.5px; color: var(--muted); padding: 0 6px; }
+  .dc-seg button { border: 0; background: none; color: var(--text); font: 800 15px "Inter"; padding: 6px 10px; border-radius: 9px; cursor: pointer; }
+  .dc-seg button small { font-size: 10px; color: var(--gold); margin-left: 2px; }
+  .dc-seg button.on { background: linear-gradient(160deg, #f6dc87, #d4a73a); color: #1b1405; }
+  .dc-seg button.on small { color: #3b2a00; }
+  .dc-ov { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .dc-hint { position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); text-align: center; padding: 16px; border-radius: 16px;
+    background: rgba(0,0,0,.65); display: none; line-height: 1.5; }
+  .dc-hint.show { display: block; }
+  .dc-hint small { color: var(--muted); }
+  .dc-panel { background: linear-gradient(180deg, #154d33, #0b2b1c); border-top: 1px solid rgba(231,195,90,.35); padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
+    max-height: 52vh; overflow-y: auto; }
+  .dc-title { font: 900 18px var(--display); }
+  .dc-faces { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .dc-face { border: 1px solid var(--line); background: rgba(255,255,255,.07); color: var(--ivory); border-radius: 12px; padding: 10px 0 6px; font: 900 20px var(--display); cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,.4); }
+  .dc-face small { display: block; font: 600 10px "Inter"; color: var(--muted); margin-top: 3px; }
+  .dc-face.on { background: linear-gradient(160deg, #f6dc87, #d4a73a); color: #1b1405; }
+  .dc-face.on small { color: #3b2a00; }
+  .dc-who { display: flex; gap: 6px; overflow-x: auto; }
+  .dc-p { display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.05);
+    color: var(--text); font: 600 13px "Inter"; cursor: pointer; white-space: nowrap; }
+  .dc-p.on { border-color: #4ade80; background: rgba(74,222,128,.15); }
+  .dc-res { display: flex; gap: 8px; justify-content: center; margin: 6px 0; }
+  .dc-die { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font: 900 20px var(--display);
+    background: linear-gradient(160deg, #fffdf6, #e2d8bd); color: #14281c; box-shadow: 0 4px 0 #a99c78, 0 6px 12px rgba(0,0,0,.4); animation: pop .4s cubic-bezier(.2,1.6,.4,1) backwards; }
+  .dc-die:nth-child(2) { animation-delay: .05s } .dc-die:nth-child(3) { animation-delay: .1s } .dc-die:nth-child(4) { animation-delay: .15s } .dc-die:nth-child(5) { animation-delay: .2s }
+  .dc-die.weak { box-shadow: 0 4px 0 #a99c78, 0 0 0 3px #facc15; }
+  .dc-sugg { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .dc-sugg .btn { flex: 1 1 45%; display: flex; justify-content: space-between; gap: 8px; }
+  .dc-sugg .btn b { font-family: var(--display); }
+  .dc-wait { text-align: center; padding: 18px 6px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -521,6 +566,7 @@
 <div id="bgdice"></div>
 <input type="file" id="avfile" accept="image/*" hidden>
 
+<script src="dicecam.js"></script>
 <script>
 const CATS = [
   { k: '1', label: 'Einser', n: 1 }, { k: '2', label: 'Zweier', n: 2 }, { k: '3', label: 'Dreier', n: 3 },
@@ -535,7 +581,12 @@ const PIPS = { 1: [[50,50]], 2: [[28,28],[72,72]], 3: [[28,28],[50,50],[72,72]],
 const die = n => `<svg class="die" viewBox="0 0 100 100"><rect x="4" y="4" width="92" height="92" rx="22" fill="#fbf7ec"/><rect x="4" y="4" width="92" height="92" rx="22" fill="none" stroke="#0002" stroke-width="3"/>${PIPS[n].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9.5" fill="${n === 1 ? '#c0392b' : '#14281c'}"/>`).join('')}</svg>`;
 const FACE_ROT = { 1: [0, 0], 6: [0, 180], 3: [0, -90], 4: [0, 90], 2: [-90, 0], 5: [90, 0] };
 const cube3d = (size, cls = '') => `<span class="scene"><span class="cube ${cls}" style="--s:${size}px">${[1, 2, 3, 4, 5, 6].map(n => `<span class="f f${n}">${die(n)}</span>`).join('')}</span></span>`;
-const catIcon = c => c.n ? die(c.n) : `<span class="fig">${FIGICON[c.k]}</span>`;
+const PK_FACES = ['9', '10', 'B', 'D', 'K', 'A'];
+const PK_NAMES = ['Neuner', 'Zehner', 'Buben', 'Damen', 'Könige', 'Asse'], STD_NAMES = ['Einser', 'Zweier', 'Dreier', 'Vierer', 'Fünfer', 'Sechser'];
+const isPoker = () => db && db.settings.diceType === 'poker';
+function applyDiceType() { UPPER.forEach((c, i) => { c.label = (isPoker() ? PK_NAMES : STD_NAMES)[i]; }); }
+const faceLabels = () => isPoker() ? PK_FACES : ['1', '2', '3', '4', '5', '6'];
+const catIcon = c => c.n ? (isPoker() ? `<span class="fig pk">${PK_FACES[c.n - 1]}</span>` : die(c.n)) : `<span class="fig">${FIGICON[c.k]}</span>`;
 const COLORS = ['#f2cf63', '#7dd3fc', '#f9a8d4', '#86efac', '#fdba74', '#c4b5fd', '#fca5a5', '#5eead4'];
 function pcolor(pid) { const i = db.players.findIndex(p => p.id === pid); return COLORS[(i < 0 ? 0 : i) % COLORS.length]; }
 const avatar = (pid, cls = '') => {
@@ -808,7 +859,7 @@ async function call(method, url, body) {
   if (!r.ok) { toast(j.error || 'Fehler'); throw new Error(j.error); }
   return j;
 }
-async function load(quiet) { db = await call('GET', 'state'); me = db.me; PROG = computeProgress(db.games); if (!quiet) render(); }
+async function load(quiet) { db = await call('GET', 'state'); me = db.me; applyDiceType(); PROG = computeProgress(db.games); if (!quiet) render(); }
 
 let es = null;
 function connect() {
@@ -942,7 +993,7 @@ function renderGame() {
     return r + '</tr>';
   };
   const sec = (t, sub) => `<tr class="sec"><td colspan="${g.players.length + 1}">${t} <span>· ${sub}</span></td></tr>`;
-  h += sec('Augen', 'Einser bis Sechser');
+  h += sec(isPoker() ? 'Bilder' : 'Augen', isPoker() ? 'Neuner bis Asse' : 'Einser bis Sechser');
   UPPER.forEach(x => h += row(x));
   const calcs = g.players.map(pid => colCalc(g, pid, c));
   if (g.bonusThreshold > 0) {
@@ -959,6 +1010,7 @@ function renderGame() {
   if (!g.finished) h += `<button class="btn primary grow" id="finish">${gameDone(g) ? '🏁 Spiel abschließen' : '🏁 Spiel beenden'}</button>`;
   else h += `<button class="btn grow" id="reopen">✏️ Wieder öffnen</button>`;
   h += `<button class="btn grow" id="newgame">➕ Neues Spiel</button></div>`;
+  if (!g.finished) h += `<button class="btn camb" id="cam">📷 Würfe mit Kamera erkennen <span class="dc-proto">PROTOTYP</span></button>`;
   app.innerHTML = h;
   lastCell = null;
 
@@ -991,6 +1043,7 @@ function renderGame() {
     await call('POST', `games/${g.id}/finish`, { totals, winner: leaders(g) });
   });
   $('#reopen') && ($('#reopen').onclick = () => call('POST', `games/${g.id}/finish`, { reopen: true }));
+  $('#cam') && ($('#cam').onclick = () => openCam(g));
   $('#newgame').onclick = () => { currentGameId = 'new'; localStorage.removeItem('gameId'); selPlayers = [...g.players]; renderNewGame(); };
 }
 
@@ -1035,6 +1088,26 @@ function renderNewGame() {
     currentGameId = g.id; colTab = 0; view = 'game'; await load();
   };
   app.querySelectorAll('.game-item').forEach(el => el.onclick = () => { currentGameId = el.dataset.g; render(); });
+}
+
+// ---------- Kamera (Prototyp) ----------
+async function enterScore(g, pid, c, k, v) {
+  const cur = g.scores[pid][c]?.[k];
+  lastCell = `${pid}|${c}|${k}`; lastFx = { pid, c, k, v, old: cur };
+  g.scores[pid][c][k] = v; render();
+  await call('PUT', `games/${g.id}/score`, { player: pid, col: c, cat: k, value: v });
+}
+async function openCam(g) {
+  let model = null;
+  try { model = (await call('GET', 'dicemodel')).model; } catch {}
+  DiceCam.open({
+    game: g, col: colTab, faceLabels: faceLabels(), toast, avatar: pid => avatar(pid),
+    playerName: pid => esc(pname(pid)),
+    nextPlayer: () => { const gg = db.games.find(x => x.id === g.id) || g; return nextPlayer(gg); },
+    getModel: () => model,
+    saveModel: async m => { model = m; await call('PUT', 'dicemodel', { model: m }); },
+    enter: async (pid, c, k, v) => { const gg = db.games.find(x => x.id === g.id) || g; await enterScore(gg, pid, c, k, v); g = gg; },
+  });
 }
 
 // ---------- Auswahl-Sheet ----------
@@ -1267,7 +1340,7 @@ function renderPlayers() {
 const EVN = { game_started: 'Spielstart', score: 'Punkte eingetragen', grande: 'Grande', leader_changed: 'Führungswechsel',
   game_finished: 'Spielende / Sieger', trophy: 'Trophäe', level_up: 'Level-Aufstieg' };
 function integrationsCard() {
-  return `<div class="card"><h2>💡 Lichteffekte</h2><div id="lfx" class="muted">Lädt …</div></div>` + `<div class="card"><h2>🔗 Integrationen</h2><p class="muted" style="margin-top:0">Nur für Admins sichtbar. Die App sendet Ereignisse an deine Geräte – was dort passiert, legst du selbst fest.</p><div id="intg" class="muted">Lädt …</div></div>`;
+  return `<div class="card"><h2>💡 Lichteffekte</h2><div id="lfx" class="muted">Lädt …</div></div>` + `<div class="card"><h2>🔗 Integrationen</h2><div id="intg" class="muted">Lädt …</div></div>`;
 }
 // ---------- Lichteffekte ----------
 const LTRIG = [['grande_served', '💎 Grande serviert'], ['grande', '💎 Grande'], ['poker_served', '🃏 Poker serviert'], ['poker', '🃏 Poker'],
@@ -1279,7 +1352,7 @@ let LFX = null;
 const ruleId = () => Math.random().toString(16).slice(2, 10);
 async function bindLightFx() {
   const box = $('#lfx'); if (!box) return;
-  try { LFX = await call('GET', 'lightfx'); } catch { box.textContent = 'Konnte nicht geladen werden.'; return; }
+  try { LFX = await call('GET', 'lightfx'); box.closest('.card').style.display = LFX.available ? '' : 'none'; } catch { box.textContent = 'Konnte nicht geladen werden.'; return; }
   renderLightFx();
 }
 function renderLightFx() {
@@ -1352,19 +1425,21 @@ function pickLights(current, done, title = 'Lampen auswählen') {
 }
 
 async function bindIntegrations() {
-  bindLightFx();
+  await bindLightFx();
   const box = $('#intg'); if (!box) return;
   const I = await call('GET', 'integrations');
+  const inHA = !!LFX?.available;   // läuft als HA-App → Webhook nicht nötig
+  const ttl = box.closest('.card')?.querySelector('h2'); if (ttl && inHA) ttl.textContent = '🟩 PixelIt';
   const evs = (k, cur) => Object.keys(EVN).map(e => `<label class="switch"><span>${EVN[e]}</span><input type="checkbox" data-ev="${k}.${e}" ${cur[e] ? 'checked' : ''}></label>`).join('');
   box.className = '';
-  box.innerHTML = `
+  box.innerHTML = (inHA ? '' : `
     <div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px"><span style="font-size:24px">🏠</span><b style="font-size:17px">Home Assistant</b></div>
     <input type="text" id="haurl" placeholder="http://192.168.50.x:8123/api/webhook/wuerfelpoker" value="${esc(I.ha.url)}" autocapitalize="none">
     <p class="muted" style="margin:8px 0">Webhook-URL aus einer HA-Automation mit Webhook-Auslöser. Jedes Ereignis wird als JSON gesendet.</p>
     <details><summary class="muted" style="cursor:pointer;margin-bottom:6px">Ereignisse auswählen</summary>${evs('ha', I.ha.events)}</details>
     <button class="btn small" id="hatest" style="margin-top:8px">📡 Test senden</button>
     <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
-    <div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px"><span style="font-size:24px">🟩</span><b style="font-size:17px">PixelIt</b></div>
+    <div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px"><span style="font-size:24px">🟩</span><b style="font-size:17px">PixelIt</b></div>`) + `
     <input type="text" id="pxurl" placeholder="IP-Adresse, z. B. 192.168.50.60" value="${esc(I.pixelit.url)}" autocapitalize="none">
     <label class="switch" style="margin-top:6px"><span>Zurück zur Uhr nach … Sekunden (0 = nie)</span><input type="number" id="pxback" value="${I.pixelit.back}" min="0" style="width:84px;appearance:auto;height:auto;border-radius:12px"></label>
     <details><summary class="muted" style="cursor:pointer;margin-bottom:6px">Ereignisse auswählen</summary>${evs('pixelit', I.pixelit.events)}</details>
@@ -1372,7 +1447,7 @@ async function bindIntegrations() {
     <button class="btn primary" id="intsave" style="width:100%;margin-top:18px">💾 Integrationen speichern</button>`;
   const collect = () => {
     const ev = k => Object.fromEntries(Object.keys(EVN).map(e => [e, $(`[data-ev="${k}.${e}"]`).checked]));
-    return { ha: { url: $('#haurl').value.trim(), events: ev('ha') }, pixelit: { url: $('#pxurl').value.trim(), back: +$('#pxback').value || 0, events: ev('pixelit') } };
+    return { ha: inHA ? I.ha : { url: $('#haurl').value.trim(), events: ev('ha') }, pixelit: { url: $('#pxurl').value.trim(), back: +$('#pxback').value || 0, events: ev('pixelit') } };
   };
   $('#intsave').onclick = async () => { await call('PUT', 'integrations', collect()); toast('Integrationen gespeichert ✓'); };
   const test = async (target, btn) => {
@@ -1380,7 +1455,8 @@ async function bindIntegrations() {
     try { await call('POST', 'integrations/test', { target }); toast(target === 'ha' ? 'Home Assistant hat geantwortet ✓' : 'PixelIt zeigt die Test-Animation ✓'); }
     catch {} finally { btn.disabled = false; btn.textContent = t; }
   };
-  $('#hatest').onclick = e => test('ha', e.target); $('#pxtest').onclick = e => test('pixelit', e.target);
+  if ($('#hatest')) $('#hatest').onclick = e => test('ha', e.target);
+  $('#pxtest').onclick = e => test('pixelit', e.target);
 }
 const versionInfo = () => `<div class="version">🎲 Würfelpoker <b>v${APP_VERSION}</b> · <a href="https://github.com/Corezone/wuerfelpoker" target="_blank" style="color:inherit">GitHub</a></div>`;
 let APP_VERSION = '', ingressMode = false;
@@ -1462,7 +1538,11 @@ function renderSettings() {
   if (optTab === 'rules' && !admin) h += `<div class="card"><h2>🎯 Spielregeln</h2><p class="muted" style="margin-top:0">Die Regeln kann nur ein Admin ändern.</p>
     <div class="rules"><span><b>${s.columns}</b> Spalte${s.columns > 1 ? 'n' : ''} ×${s.multipliers.join('/')}</span><span>Straße <b>${s.figures.strasse.join('/')}</b></span>
     <span>Full <b>${s.figures.full.join('/')}</b></span><span>Poker <b>${s.figures.poker.join('/')}</b></span><span>Grande <b>${s.figures.grande.join('/')}</b></span></div></div>`;
-  if (optTab === 'rules' && admin) h += `<div class="card"><h2>🧮 Spalten</h2>
+  if (optTab === 'rules' && admin) h += `<div class="card"><h2>🎲 Würfel</h2>
+      <select id="dtype"><option value="normal" ${s.diceType !== 'poker' ? 'selected' : ''}>Augenwürfel (1–6) – Einser bis Sechser</option>
+        <option value="poker" ${s.diceType === 'poker' ? 'selected' : ''}>Pokerwürfel (9, 10, B, D, K, A) – Neuner bis Asse</option></select>
+      <p class="muted" style="margin:8px 0 0">Bei Pokerwürfeln zählt 9 = 1, 10 = 2, B = 3, D = 4, K = 5, A = 6 Punkte pro Würfel.</p></div>
+    <div class="card"><h2>🧮 Spalten</h2>
       <div class="row"><span class="grow">Anzahl Spalten pro Spieler</span><input type="number" id="cols" min="1" max="6" value="${s.columns}"></div>
       <div class="muted" style="margin:12px 0 6px">Multiplikator je Spalte</div>
       <div class="row" id="mults">${s.multipliers.map((m, i) => `<label class="muted">S${i + 1} <input type="number" data-m="${i}" value="${m}" step="1"></label>`).join('')}</div>
@@ -1510,8 +1590,9 @@ function renderSettings() {
       app.querySelectorAll('[data-f]').forEach(x => { (figures[x.dataset.f] ||= [0, 0])[+x.dataset.i] = +x.value; });
       await call('PUT', 'settings', {
         columns: +$('#cols').value, multipliers: [...app.querySelectorAll('[data-m]')].map(x => +x.value),
-        figures, bonusThreshold: +$('#bt').value, bonus: +$('#bv').value,
+        figures, bonusThreshold: +$('#bt').value, bonus: +$('#bv').value, diceType: $('#dtype').value,
       });
+      await load(true); applyDiceType();
       toast('Gespeichert ✓');
     };
   }

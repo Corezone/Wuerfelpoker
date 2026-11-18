@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9.0 – Kamera-Erkennung (Prototyp) & Pokerwürfel
+- 🧪 **PROTOTYP: Würfe mit der Handykamera erkennen** – Würfel werden gefunden, Symbole erkannt und passende Einträge vorgeschlagen (inkl. „serviert“ im 1. Wurf)
+- Anlern-Modus: jede Würfelseite einmal zeigen, die Muster gelten danach für alle Geräte
+- **Würfeltyp wählbar:** Augenwürfel oder Pokerwürfel (Neuner, Zehner, Buben, Damen, Könige, Asse)
+- In der Home-Assistant-App wird der Webhook-Bereich ausgeblendet (Lichteffekte laufen direkt über HA)
+
 ## v1.8.0 – Lichteffekte
 - **Lichteffekte direkt aus Home Assistant** (nur als HA-App): Lampen, Szenen und Skripte per Dropdown auswählen
 - Regeln pro Wurf: Grande, Grande serviert, Poker, Full House, Straße (jeweils auch serviert), fünf Sechser, gestrichen, Spielstart, Führungswechsel, Spielende, Trophäe, Level-Aufstieg

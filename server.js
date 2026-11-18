@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -123,8 +123,9 @@ function fail(req) { const k = ip(req), f = fails.get(k); fails.set(k, f && Date
 const validName = n => /^[\w.\-äöüÄÖÜß]{2,30}$/.test(n);
 
 // ---------- Spielwerte serverseitig berechnen ----------
-const CAT_LABEL = { 1: 'Einser', 2: 'Zweier', 3: 'Dreier', 4: 'Vierer', 5: 'Fünfer', 6: 'Sechser',
-  strasse: 'Straße', full: 'Full House', poker: 'Poker', grande: 'Grande' };
+const CAT_STD = { 1: 'Einser', 2: 'Zweier', 3: 'Dreier', 4: 'Vierer', 5: 'Fünfer', 6: 'Sechser', strasse: 'Straße', full: 'Full House', poker: 'Poker', grande: 'Grande' };
+const CAT_PK = { ...CAT_STD, 1: 'Neuner', 2: 'Zehner', 3: 'Buben', 4: 'Damen', 5: 'Könige', 6: 'Asse' };
+const CAT_LABEL = new Proxy({}, { get: (_, k) => (db.settings.diceType === 'poker' ? CAT_PK : CAT_STD)[k] });
 const UPPER_K = ['1', '2', '3', '4', '5', '6'], FIG_K = ['strasse', 'full', 'poker', 'grande'];
 function playerTotalSrv(g, pid) {
   let t = 0;
@@ -416,7 +417,7 @@ async function api(req, res, parts) {
 
   // GET /api/state  (ohne Benutzer/Sitzungen)
   if (parts[0] === 'state' && m === 'GET') {
-    const { users, sessions, integrations, lightfx, ...pub } = db;
+    const { users, sessions, integrations, lightfx, diceModel, ...pub } = db;
     return send(res, 200, { ...pub, me: publicUser(user) });
   }
 
@@ -440,6 +441,7 @@ async function api(req, res, parts) {
       figures: Object.fromEntries(Object.keys(DEFAULT_DB.settings.figures).map(k =>
         [k, [Number(s.figures?.[k]?.[0]) || 0, Number(s.figures?.[k]?.[1]) || 0]])),
       bonusThreshold: Number(s.bonusThreshold) || 0,
+      diceType: s.diceType === 'poker' ? 'poker' : 'normal',
       bonus: Number(s.bonus) || 0,
     };
     save(); return send(res, 200, db.settings);
@@ -544,6 +546,17 @@ async function api(req, res, parts) {
     return send(res, 200, { ok: true });
   }
 
+  // Kamera-Prototyp: angelernte Würfelseiten (für alle Geräte gemeinsam)
+  if (parts[0] === 'dicemodel') {
+    if (m === 'GET') return send(res, 200, { model: db.diceModel || null });
+    if (m === 'PUT') {
+      const mm = body.model;
+      if (mm && !(Array.isArray(mm.faces) && mm.faces.length === 6 && mm.faces.every(f => Array.isArray(f) && f.length <= 20 && f.every(v => Array.isArray(v) && v.length < 1000))))
+        return send(res, 400, { error: 'Ungültige Daten' });
+      db.diceModel = mm || null; save(true); return send(res, 200, { ok: true });
+    }
+  }
+
   // Lichteffekte (Admin)
   if (parts[0] === 'lightfx') {
     if (adminOnly()) return;
@@ -634,7 +647,7 @@ async function api(req, res, parts) {
   // Backup
   if (parts[0] === 'export' && m === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Disposition': 'attachment; filename="wuerfelpoker-backup.json"' });
-    const { users, sessions, integrations, lightfx, ...pub } = db;
+    const { users, sessions, integrations, lightfx, diceModel, ...pub } = db;
     return res.end(JSON.stringify(pub, null, 2));
   }
 
