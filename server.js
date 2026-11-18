@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -70,6 +70,7 @@ const AUTH_OFF = process.env.AUTH === 'off';
 const SESSION_DAYS = Number(process.env.SESSION_DAYS) || 90;
 function hashPw(pw, salt) { return crypto.scryptSync(String(pw), salt, 64).toString('hex'); }
 function checkPw(user, pw) {
+  if (!user.hash || !user.salt) return false;
   const a = Buffer.from(hashPw(pw, user.salt), 'hex'), b = Buffer.from(user.hash, 'hex');
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
@@ -78,8 +79,27 @@ function getCookie(req, name) {
   const m = (req.headers.cookie || '').match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
   return m ? decodeURIComponent(m[1]) : null;
 }
+// Home-Assistant-Ingress: HA hat den Benutzer bereits angemeldet. Den Kopfzeilen wird nur
+// vertraut, wenn die Anfrage wirklich vom Supervisor (172.30.32.2) kommt.
+const TRUST_INGRESS = process.env.TRUST_INGRESS === '1';
+const SUPERVISOR_IP = process.env.SUPERVISOR_IP || '172.30.32.2';
+const fromSupervisor = req => [SUPERVISOR_IP, '::ffff:' + SUPERVISOR_IP].includes(req.socket.remoteAddress);
+function ingressUser(req) {
+  const haId = req.headers['x-remote-user-id'];
+  if (!TRUST_INGRESS || !haId || !fromSupervisor(req)) return null;
+  let u = db.users.find(x => x.haId === haId);
+  if (!u) {
+    const raw = String(req.headers['x-remote-user-display-name'] || req.headers['x-remote-user-name'] || 'HA-Benutzer');
+    let name = raw.replace(/[^\w.\-äöüÄÖÜß]/g, '').slice(0, 30) || 'HA-Benutzer', n = 2;
+    const base = name; while (db.users.some(x => x.username.toLowerCase() === name.toLowerCase())) name = base + n++;
+    u = { id: id(), username: name, haId, admin: !db.users.some(x => x.admin) };
+    db.users.push(u); save(true);
+  }
+  return u;
+}
 function currentUser(req) {
   if (AUTH_OFF) return { id: 'local', username: 'lokal', admin: true };
+  const iu = ingressUser(req); if (iu) return iu;
   const t = getCookie(req, 'wp_session');
   const s = t && db.sessions[t];
   if (!s) return null;
@@ -93,7 +113,7 @@ function startSession(req, res, user) {
   const secure = req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : '';
   res.setHeader('Set-Cookie', `wp_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}${secure}`);
 }
-const publicUser = u => u && ({ id: u.id, username: u.username, admin: !!u.admin });
+const publicUser = u => u && ({ id: u.id, username: u.username, admin: !!u.admin, ha: !!u.haId, hasPw: !!u.hash });
 // einfacher Schutz gegen Passwort-Raten: max. 10 Fehlversuche / 15 min pro IP
 const fails = new Map();
 function ip(req) { return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress; }
@@ -195,7 +215,7 @@ function send(res, status, body) {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = '';
-    req.on('data', c => { data += c; if (data.length > 3e6) { reject(new Error('too large')); req.destroy(); } });
+    req.on('data', c => { data += c; if (data.length > 25e6) { reject(new Error('too large')); req.destroy(); } });
     req.on('end', () => { try { resolve(data ? JSON.parse(data) : {}); } catch (e) { reject(e); } });
   });
 }
@@ -227,7 +247,7 @@ async function api(req, res, parts) {
   // ----- Auth (ohne Login erreichbar) -----
   if (parts[0] === 'auth') {
     const action = parts[1];
-    if (action === 'status') return send(res, 200, { version: APP_VERSION, setup: !AUTH_OFF && db.users.length === 0, authOff: AUTH_OFF, user: publicUser(currentUser(req)) });
+    if (action === 'status') return send(res, 200, { version: APP_VERSION, ingress: !!ingressUser(req), setup: !AUTH_OFF && db.users.length === 0 && !ingressUser(req), authOff: AUTH_OFF, user: publicUser(currentUser(req)) });
     if (action === 'setup' && m === 'POST') {
       if (db.users.length) return send(res, 403, { error: 'Setup bereits erledigt' });
       const username = String(body.username || '').trim();
@@ -259,7 +279,7 @@ async function api(req, res, parts) {
 
   if (parts[0] === 'auth' && parts[1] === 'password' && m === 'POST') {
     if (AUTH_OFF) return send(res, 400, { error: 'Login ist deaktiviert' });
-    if (!checkPw(user, body.old || '')) return send(res, 400, { error: 'Altes Passwort falsch' });
+    if (user.hash && !checkPw(user, body.old || '')) return send(res, 400, { error: 'Altes Passwort falsch' });
     if (String(body.new || '').length < 6) return send(res, 400, { error: 'Passwort: mindestens 6 Zeichen' });
     setPw(user, body.new);
     // alle anderen Sitzungen dieses Benutzers beenden
@@ -469,6 +489,33 @@ async function api(req, res, parts) {
         return send(res, 200, { ok: true });
       } catch (e) { return send(res, 502, { error: 'Nicht erreichbar: ' + e.message }); }
     }
+  }
+
+  // Komplett-Backup (Admin): alles inkl. Konten, Integrationen und Profilbildern
+  if (parts[0] === 'backup' && m === 'GET') {
+    if (adminOnly()) return;
+    const avatars = {};
+    for (const f of fs.readdirSync(AV_DIR)) if (/^[a-f0-9]+\.(jpeg|png|webp)$/.test(f)) avatars[f] = fs.readFileSync(path.join(AV_DIR, f)).toString('base64');
+    const { sessions, ...data } = db;
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Disposition': `attachment; filename="wuerfelpoker-komplett-${new Date().toISOString().slice(0, 10)}.json"` });
+    return res.end(JSON.stringify({ app: 'wuerfelpoker', version: APP_VERSION, created: new Date().toISOString(), db: data, avatars }));
+  }
+  if (parts[0] === 'restore' && m === 'POST') {
+    if (adminOnly()) return;
+    const b = body;
+    if (b.app !== 'wuerfelpoker' || !b.db || !Array.isArray(b.db.players) || !Array.isArray(b.db.games) || !Array.isArray(b.db.users))
+      return send(res, 400, { error: 'Das ist kein gültiges Würfelpoker-Komplett-Backup' });
+    const users = b.db.users.map(u => ({ ...u }));
+    // wer wiederherstellt, bleibt angemeldet und Admin
+    let me = user.haId ? users.find(u => u.haId === user.haId) : users.find(u => u.id === user.id);
+    if (!me) { me = { ...user, admin: true }; users.push(me); } else me.admin = true;
+    for (const f of fs.readdirSync(AV_DIR)) fs.rmSync(path.join(AV_DIR, f), { force: true });
+    for (const [f, data] of Object.entries(b.avatars || {})) if (/^[a-f0-9]+\.(jpeg|png|webp)$/.test(f)) fs.writeFileSync(path.join(AV_DIR, f), Buffer.from(String(data), 'base64'));
+    const keepSessions = Object.fromEntries(Object.entries(db.sessions).filter(([, s]) => users.some(u => u.id === s.uid)));
+    db = { ...JSON.parse(JSON.stringify(DEFAULT_DB)), ...b.db, users, sessions: keepSessions, version: (db.version || 1) + 1 };
+    db.settings = { ...DEFAULT_DB.settings, ...b.db.settings };
+    if (!db.integrations) db.integrations = JSON.parse(JSON.stringify(DEFAULT_INTEGRATIONS));
+    save(); return send(res, 200, { ok: true, players: db.players.length, games: db.games.length });
   }
 
   // Backup

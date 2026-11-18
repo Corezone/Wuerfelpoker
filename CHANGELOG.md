@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.0 – Home-Assistant-App
+- **Als Home-Assistant-App installierbar:** eigener Eintrag in der Seitenleiste, Anmeldung über Home Assistant
+- Der erste HA-Benutzer wird automatisch Admin; optional Direktzugriff im Heimnetz über Port 8099
+- **Komplett-Backup & Wiederherstellung** (Spiele, Spieler, Profilbilder, Konten, Integrationen) – ideal für den Umzug
+- Passwort festlegen für Konten ohne Passwort (z. B. HA-Benutzer)
+- App funktioniert jetzt auch unter einem Unterpfad (Reverse-Proxy, Ingress)
+
 ## v1.6.0 – 3D & neue Optionen
 - **Echte 3D-Würfel:** Logo, Login, Hintergrund und 3D-Würfelwurf beim Spielstart
 - **Neige-Effekt** mit Lichtreflex auf Karten, Tasten und Punkte-Chips mit Tiefe, 3D-Podest

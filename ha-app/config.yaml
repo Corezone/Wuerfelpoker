@@ -1,0 +1,20 @@
+name: Würfelpoker
+version: "1.7.0"
+slug: wuerfelpoker
+description: Punktezähler für Würfelpoker – Trophäen, 3D-Effekte und Live-Sync
+url: https://github.com/Corezone/wuerfelpoker
+arch:
+  - amd64
+  - aarch64
+  - armv7
+init: false
+startup: application
+boot: auto
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:dice-5
+panel_title: Würfelpoker
+ports:
+  8099/tcp: null
+ports_description:
+  8099/tcp: Direkter Zugriff im Heimnetz (optional, Anmeldung mit App-Passwort)

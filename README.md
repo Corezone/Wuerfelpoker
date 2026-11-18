@@ -21,6 +21,17 @@ Alle Geräte synchronisieren sich live: Einer trägt am Handy ein, der Fernseher
 
 ---
 
+## 🏠 Als Home-Assistant-App (empfohlen, wenn du HA OS nutzt)
+
+1. In Home Assistant: **Einstellungen → Apps → App-Store**
+2. Oben rechts **⋮ → Repositories** → `https://github.com/Corezone/wuerfelpoker` hinzufügen
+3. **Würfelpoker** auswählen → **Installieren** → **Starten** → **In der Seitenleiste anzeigen**
+
+Die Anmeldung übernimmt Home Assistant, Daten landen automatisch in deinen HA-Backups.
+Umzug von einer bestehenden Installation: dort **Optionen → Allgemein → Komplett-Backup**, in der HA-App **Backup einspielen**.
+
+---
+
 ## ⚡ Schnellinstallation auf Proxmox
 
 In der **Shell des Proxmox-Hosts** (Node anklicken → Shell):

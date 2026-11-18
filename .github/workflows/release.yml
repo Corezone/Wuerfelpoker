@@ -5,7 +5,7 @@ name: Release
 on:
   push:
     branches: [main]
-    paths: [server.js, CHANGELOG.md]
+    paths: [server.js, CHANGELOG.md, ha-app/config.yaml]
   workflow_dispatch:
 
 permissions:
@@ -20,6 +20,13 @@ jobs:
       - name: Version lesen
         id: v
         run: echo "version=$(grep -oP "APP_VERSION = '\K[^']+" server.js)" >> "$GITHUB_OUTPUT"
+
+      - name: Versionen von App und HA-App vergleichen
+        run: |
+          HA=$(grep -oP '^version:\s*"?\K[^"]+' ha-app/config.yaml)
+          if [ "$HA" != "${{ steps.v.outputs.version }}" ]; then
+            echo "::error::ha-app/config.yaml hat Version $HA, server.js hat ${{ steps.v.outputs.version }}"; exit 1
+          fi
 
       - name: Gibt es das Release schon?
         id: check

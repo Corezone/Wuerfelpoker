@@ -6,18 +6,18 @@
 <meta name="theme-color" content="#0c3b25">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>Würfelpoker</title>
 <style>
-  @font-face { font-family: "Playfair Display"; font-weight: 700; font-display: swap; src: url(/fonts/playfair-display-latin-700-normal.woff2) format("woff2"); }
-  @font-face { font-family: "Playfair Display"; font-weight: 900; font-display: swap; src: url(/fonts/playfair-display-latin-900-normal.woff2) format("woff2"); }
-  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(/fonts/inter-latin-400-normal.woff2) format("woff2"); }
-  @font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url(/fonts/inter-latin-500-normal.woff2) format("woff2"); }
-  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(/fonts/inter-latin-600-normal.woff2) format("woff2"); }
-  @font-face { font-family: "Inter"; font-weight: 700; font-display: swap; src: url(/fonts/inter-latin-700-normal.woff2) format("woff2"); }
-  @font-face { font-family: "Inter"; font-weight: 800; font-display: swap; src: url(/fonts/inter-latin-800-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Playfair Display"; font-weight: 700; font-display: swap; src: url(fonts/playfair-display-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Playfair Display"; font-weight: 900; font-display: swap; src: url(fonts/playfair-display-latin-900-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url(fonts/inter-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url(fonts/inter-latin-500-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url(fonts/inter-latin-600-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 700; font-display: swap; src: url(fonts/inter-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 800; font-display: swap; src: url(fonts/inter-latin-800-normal.woff2) format("woff2"); }
   :root {
     --bg: #0b1f15; --card: rgba(10, 28, 19, .72); --card2: rgba(255,255,255,.05); --line: rgba(255,255,255,.09);
     --text: #f3efe2; --muted: #a9b8a8; --accent: #e7c35a; --accent2: #b8902c; --felt: #0f4a2e;
@@ -519,7 +519,7 @@ const avatar = (pid, cls = '') => {
   // alter/gelöschter Eintrag ohne Bild → Bild vom aktiven Spieler mit gleichem Namen nehmen
   if (p && !p.avatarExt) p = db.players.find(x => !x.archived && x.avatarExt && x.name.toLowerCase() === p.name.toLowerCase()) || p;
   const pr = PROG[nameKey(pid)]; if (pr && pr.rank.tier) cls += ' frame-' + pr.rank.tier;
-  if (p && p.avatarExt) return `<span class="avatar img ${cls}" style="--c:${c};background:url(/api/avatar/${p.id}?v=${p.avatarV}) center/cover">${esc((p.name[0] || '?').toUpperCase())}</span>`;
+  if (p && p.avatarExt) return `<span class="avatar img ${cls}" style="--c:${c};background:url(api/avatar/${p.id}?v=${p.avatarV}) center/cover">${esc((p.name[0] || '?').toUpperCase())}</span>`;
   return `<span class="avatar ${cls}" style="background:${c}">${esc((pname(pid)[0] || '?').toUpperCase())}</span>`;
 };
 
@@ -778,7 +778,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 // ---------- API ----------
 async function call(method, url, body) {
-  const r = await fetch('/api/' + url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch('api/' + url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({}));
   if (r.status === 401 && !url.startsWith('auth/')) { showLogin(); throw new Error('login'); }
   if (!r.ok) { toast(j.error || 'Fehler'); throw new Error(j.error); }
@@ -789,7 +789,7 @@ async function load(quiet) { db = await call('GET', 'state'); me = db.me; PROG =
 let es = null;
 function connect() {
   if (es) es.close();
-  es = new EventSource('/api/events');
+  es = new EventSource('api/events');
   es.onopen = () => $('#dot').classList.add('on');
   // In den Einstellungen nicht neu zeichnen, sonst gehen Eingaben verloren
   es.onmessage = e => { if (!db || +e.data !== db.version) load(view === 'settings').catch(() => {}); };
@@ -818,7 +818,7 @@ function authScreen(mode) {
   $('#lf').onsubmit = async e => {
     e.preventDefault();
     if (setup && $('#lp').value !== $('#lp2').value) { $('#lerr').textContent = 'Passwörter stimmen nicht überein'; return; }
-    const r = await fetch('/api/auth/' + (setup ? 'setup' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const r = await fetch('api/auth/' + (setup ? 'setup' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: $('#lu').value, password: $('#lp').value }) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { $('#lerr').textContent = j.error || 'Fehler'; return; }
@@ -827,8 +827,8 @@ function authScreen(mode) {
 }
 const showLogin = () => authScreen('login');
 async function start() {
-  const st = await (await fetch('/api/auth/status')).json();
-  authOff = st.authOff; APP_VERSION = st.version || '';
+  const st = await (await fetch('api/auth/status')).json();
+  authOff = st.authOff; APP_VERSION = st.version || ''; ingressMode = !!st.ingress;
   if (st.setup) return authScreen('setup');
   if (!st.user) return showLogin();
   me = st.user;
@@ -1078,7 +1078,7 @@ function celebrate(g) {
   document.body.appendChild(w);
   w.querySelector('button').onclick = () => { w.style.transition = 'opacity .25s'; w.style.opacity = 0; setTimeout(() => w.remove(), 250); };
   confetti(4200, 220); SFX.fanfare(); buzz([100, 50, 100, 50, 300]);
-  unlocks.forEach(([pid, t, b]) => fetch('/api/notify', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+  unlocks.forEach(([pid, t, b]) => fetch('api/notify', { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(t ? { type: 'trophy', game_id: g.id, player: pname(pid), trophy: t.name, tier: t.t }
       : { type: 'level_up', game_id: g.id, player: pname(pid), level: b.level, rank: b.rank.title }) }).catch(() => {}));
   setTimeout(() => unlocks.forEach(([pid, t, b]) => t
@@ -1276,7 +1276,7 @@ async function bindIntegrations() {
   $('#hatest').onclick = e => test('ha', e.target); $('#pxtest').onclick = e => test('pixelit', e.target);
 }
 const versionInfo = () => `<div class="version">🎲 Würfelpoker <b>v${APP_VERSION}</b> · <a href="https://github.com/Corezone/wuerfelpoker" target="_blank" style="color:inherit">GitHub</a></div>`;
-let APP_VERSION = '';
+let APP_VERSION = '', ingressMode = false;
 function fxCard() {
   return `<div class="card"><h2>✨ Effekte</h2>
     <label class="switch"><span>🔊 Sounds</span><input type="checkbox" id="fxs" ${FX.sound ? 'checked' : ''}></label>
@@ -1293,12 +1293,12 @@ function bindFx() {
 function accountCard() {
   if (authOff) return '<div class="card muted">Login ist deaktiviert (AUTH=off).</div>';
   return `<div class="card"><h2>👤 Mein Konto</h2>
-    <div class="row" style="margin-bottom:12px"><span class="grow">Angemeldet als <b>${esc(me.username)}</b>${me.admin ? '<span class="tag">Admin</span>' : ''}</span>
-      <button class="btn small" id="logout">Abmelden</button></div>
-    <div class="muted" style="margin-bottom:6px">Passwort ändern</div>
-    <input type="password" id="pwo" placeholder="Altes Passwort" autocomplete="current-password" style="${INP};margin-bottom:8px">
+    <div class="row" style="margin-bottom:12px"><span class="grow">Angemeldet als <b>${esc(me.username)}</b>${me.admin ? '<span class="tag">Admin</span>' : ''}${me.ha ? '<span class="tag" style="background:rgba(56,189,248,.18);color:#7dd3fc;border-color:rgba(56,189,248,.4)">🏠 über Home Assistant</span>' : ''}</span>
+      ${ingressMode ? '' : '<button class="btn small" id="logout">Abmelden</button>'}</div>
+    <div class="muted" style="margin-bottom:6px">${me.hasPw ? 'Passwort ändern' : 'Passwort festlegen – nötig für den direkten Zugriff ohne Home Assistant'}</div>
+    ${me.hasPw ? `<input type="password" id="pwo" placeholder="Altes Passwort" autocomplete="current-password" style="${INP};margin-bottom:8px">` : ''}
     <input type="password" id="pwn" placeholder="Neues Passwort (min. 6 Zeichen)" autocomplete="new-password" style="${INP};margin-bottom:8px">
-    <button class="btn" id="pwsave">Passwort ändern</button></div>
+    <button class="btn" id="pwsave">${me.hasPw ? 'Passwort ändern' : 'Passwort festlegen'}</button></div>
     ${me.admin ? `<div class="card"><h2>👥 Benutzer</h2><div id="ulist" class="muted">Lädt…</div>
       <div class="muted" style="margin:12px 0 6px">Neuer Benutzer</div>
       <input type="text" id="nu" placeholder="Benutzername" autocapitalize="none" style="margin-bottom:8px">
@@ -1308,11 +1308,11 @@ function accountCard() {
 }
 const INP = 'background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;width:100%';
 async function bindAccount() {
-  if (authOff || !$('#logout')) return;
-  $('#logout').onclick = async () => { await fetch('/api/auth/logout', { method: 'POST' }); me = null; db = null; showLogin(); };
+  if (authOff || !$('#pwsave')) return;
+  if ($('#logout')) $('#logout').onclick = async () => { await fetch('api/auth/logout', { method: 'POST' }); me = null; db = null; showLogin(); };
   $('#pwsave').onclick = async () => {
-    await call('POST', 'auth/password', { old: $('#pwo').value, new: $('#pwn').value });
-    $('#pwo').value = $('#pwn').value = ''; toast('Passwort geändert ✓');
+    await call('POST', 'auth/password', { old: $('#pwo') ? $('#pwo').value : '', new: $('#pwn').value });
+    if ($('#pwo')) $('#pwo').value = ''; $('#pwn').value = ''; toast('Passwort gespeichert ✓'); await load(true); renderSettings();
   };
   if (!me.admin) return;
   const loadUsers = async () => {
@@ -1347,7 +1347,10 @@ function renderSettings() {
   if (!tabs.some(t => t[0] === optTab)) optTab = 'general';
   let h = `<div class="opttabs">${tabs.map(([k, i, l]) => `<button class="ot ${optTab === k ? 'on' : ''}" data-ot="${k}"><span>${i}</span>${l}</button>`).join('')}</div>`;
   const figNames = { strasse: 'Straße', full: 'Full House', poker: 'Poker', grande: 'Grande' };
-  if (optTab === 'general') h += fxCard() + (admin ? `<div class="card"><h2>💾 Backup</h2><p class="muted" style="margin-top:0">Spiele, Spieler und Einstellungen als JSON-Datei.</p><a class="btn" href="/api/export" download>⬇️ Daten exportieren</a></div>` : '');
+  if (optTab === 'general') h += fxCard() + (admin ? `<div class="card"><h2>💾 Backup</h2>
+    <p class="muted" style="margin-top:0">Das Komplett-Backup enthält alles: Spiele, Spieler, Profilbilder, Konten und Integrationen. Damit kannst du auch auf einen anderen Server umziehen, z. B. in Home Assistant.</p>
+    <div class="row"><a class="btn" href="api/backup" download>⬇️ Komplett-Backup</a><button class="btn" id="rsbtn">⬆️ Backup einspielen</button></div>
+    <input type="file" id="rsfile" accept=".json,application/json" hidden></div>` : '');
   if (optTab === 'account') h += accountCard();
   if (optTab === 'rules' && !admin) h += `<div class="card"><h2>🎯 Spielregeln</h2><p class="muted" style="margin-top:0">Die Regeln kann nur ein Admin ändern.</p>
     <div class="rules"><span><b>${s.columns}</b> Spalte${s.columns > 1 ? 'n' : ''} ×${s.multipliers.join('/')}</span><span>Straße <b>${s.figures.strasse.join('/')}</b></span>
@@ -1376,6 +1379,17 @@ function renderSettings() {
   app.querySelectorAll('[data-ot]').forEach(b => b.onclick = () => { optTab = b.dataset.ot; renderSettings();
     if (!FX.reduced) app.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' }); });
   bindFx();
+  if ($('#rsbtn')) {
+    $('#rsbtn').onclick = () => $('#rsfile').click();
+    $('#rsfile').onchange = async () => {
+      const f = $('#rsfile').files[0]; if (!f) return;
+      let data; try { data = JSON.parse(await f.text()); } catch { return toast('Datei ist kein gültiges Backup'); }
+      if (data.app !== 'wuerfelpoker' || !data.db) return toast('Das ist kein Würfelpoker-Komplett-Backup');
+      if (!confirm(`Backup vom ${new Date(data.created).toLocaleString('de-AT')} einspielen?\n\n${data.db.players.length} Spieler · ${data.db.games.length} Spiele\n\nAlle aktuellen Daten werden ersetzt!`)) return;
+      const r = await call('POST', 'restore', data);
+      toast(`Wiederhergestellt: ${r.players} Spieler, ${r.games} Spiele ✓`); setTimeout(() => location.reload(), 1200);
+    };
+  }
   if (optTab === 'account') bindAccount();
   if (optTab === 'integrations') bindIntegrations();
   if (optTab === 'rules' && admin) {
@@ -1405,7 +1419,7 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   if (!FX.reduced) app.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.9,.3,1)' });
 });
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 start();
 </script>
 </body>
