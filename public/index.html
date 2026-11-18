@@ -474,6 +474,30 @@
     background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 45%, transparent 60%); background-size: 250% 100%; animation: sheen 4s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 200ms); }
   @keyframes sheen { 0%, 60% { background-position: 150% 0; } 100% { background-position: -100% 0; } }
   .psn .ic { animation: flipin .8s cubic-bezier(.2,1.2,.4,1); }
+
+  /* ===== Lichteffekte ===== */
+  .lrule { border-radius: 16px; padding: 12px; margin-bottom: 10px; background: rgba(0,0,0,.22); border: 1px solid var(--line); animation: rowin .35s ease-out; }
+  .lrule.off { opacity: .5; }
+  .lrule .top { display: flex; gap: 8px; align-items: center; }
+  .lrule .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  select { appearance: none; -webkit-appearance: none; width: 100%; background: rgba(0,0,0,.3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23e7c35a' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center;
+    color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 11px 32px 11px 12px; font: 600 15px "Inter", sans-serif; cursor: pointer; }
+  select:focus { outline: none; border-color: var(--accent); }
+  select option { background: #0d2a1c; color: var(--text); }
+  .lpick { width: 100%; text-align: left; margin-top: 8px; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; }
+  .lpick span { overflow: hidden; text-overflow: ellipsis; }
+  .colorbox { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 12px; padding: 4px 10px; }
+  .colorbox input[type=color] { width: 34px; height: 34px; border: 0; background: none; padding: 0; cursor: pointer; }
+  .colorbox span { font-size: 13px; color: var(--muted); }
+  .numbox { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 12px; padding: 4px 4px 4px 12px; font-size: 13px; color: var(--muted); }
+  .numbox input { width: 64px !important; padding: 8px 4px !important; border: 0 !important; background: transparent !important; }
+  .lsearch { margin: 10px 0; }
+  .llist { max-height: 46vh; overflow-y: auto; margin: 0 -4px; }
+  .litem { display: flex; align-items: center; gap: 12px; padding: 11px 6px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .litem input { width: 22px; height: 22px; accent-color: var(--accent); }
+  .litem small { display: block; color: var(--muted); font-size: 11.5px; }
+  .swatch { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; background: conic-gradient(red, orange, yellow, lime, cyan, blue, magenta, red); }
+  .swatch.mono { background: linear-gradient(#fff6cf, #d8c69a); }
 </style>
 </head>
 <body>
@@ -1243,9 +1267,92 @@ function renderPlayers() {
 const EVN = { game_started: 'Spielstart', score: 'Punkte eingetragen', grande: 'Grande', leader_changed: 'Führungswechsel',
   game_finished: 'Spielende / Sieger', trophy: 'Trophäe', level_up: 'Level-Aufstieg' };
 function integrationsCard() {
-  return `<div class="card"><h2>🔗 Integrationen</h2><p class="muted" style="margin-top:0">Nur für Admins sichtbar. Die App sendet Ereignisse an deine Geräte – was dort passiert, legst du selbst fest.</p><div id="intg" class="muted">Lädt …</div></div>`;
+  return `<div class="card"><h2>💡 Lichteffekte</h2><div id="lfx" class="muted">Lädt …</div></div>` + `<div class="card"><h2>🔗 Integrationen</h2><p class="muted" style="margin-top:0">Nur für Admins sichtbar. Die App sendet Ereignisse an deine Geräte – was dort passiert, legst du selbst fest.</p><div id="intg" class="muted">Lädt …</div></div>`;
 }
+// ---------- Lichteffekte ----------
+const LTRIG = [['grande_served', '💎 Grande serviert'], ['grande', '💎 Grande'], ['poker_served', '🃏 Poker serviert'], ['poker', '🃏 Poker'],
+  ['full_served', '🏠 Full House serviert'], ['full', '🏠 Full House'], ['strasse_served', '🛣️ Straße serviert'], ['strasse', '🛣️ Straße'],
+  ['served', '🛎️ Jede servierte Figur'], ['max6', '🔥 Fünf Sechser'], ['strike', '✕ Feld gestrichen'], ['game_started', '🎲 Spielstart'],
+  ['leader_changed', '👑 Führungswechsel'], ['game_finished', '🏆 Spielende / Sieger'], ['trophy', '🥇 Trophäe freigeschaltet'], ['level_up', '⬆️ Level-Aufstieg']];
+const LEFF = [['flash', '⚡ Blinken'], ['pulse', '💫 Pulsieren'], ['rainbow', '🌈 Regenbogen'], ['color', '🎨 Farbe kurz anzeigen'], ['scene', '🎬 Szene aktivieren'], ['script', '📜 Skript ausführen']];
+let LFX = null;
+const ruleId = () => Math.random().toString(16).slice(2, 10);
+async function bindLightFx() {
+  const box = $('#lfx'); if (!box) return;
+  try { LFX = await call('GET', 'lightfx'); } catch { box.textContent = 'Konnte nicht geladen werden.'; return; }
+  renderLightFx();
+}
+function renderLightFx() {
+  const box = $('#lfx'); if (!box || !LFX) return;
+  if (!LFX.available) {
+    box.innerHTML = `Lichteffekte gibt es, wenn Würfelpoker als <b>Home-Assistant-App</b> läuft. Dann kannst du hier deine Lampen direkt auswählen.<br><br>Ohne HA-App: den Webhook unten nutzen und die Effekte in einer HA-Automation bauen.`;
+    return;
+  }
+  if (LFX.error) { box.innerHTML = `⚠️ Home Assistant antwortet nicht: ${esc(LFX.error)}`; return; }
+  const C = LFX.config, nm = id => (LFX.lights.find(l => l.id === id) || {}).name || id;
+  const opt = (list, cur) => list.map(([k, l]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${l}</option>`).join('');
+  const ent = (list, cur, ph) => `<option value="">${ph}</option>` + list.map(e => `<option value="${e.id}" ${e.id === cur ? 'selected' : ''}>${esc(e.name)}</option>`).join('');
+  box.className = '';
+  box.innerHTML = `<p class="muted" style="margin-top:0">Lege fest, was deine Lampen bei welchem Wurf machen. Nach dem Effekt gehen sie automatisch in den vorherigen Zustand zurück.</p>
+    <label class="switch" style="margin-bottom:8px"><span><b>Lichteffekte aktiv</b></span><input type="checkbox" id="lfxon" ${C.enabled ? 'checked' : ''}></label>
+    <div id="lrules">${C.rules.map(r => {
+      const usesLights = ['flash', 'pulse', 'rainbow', 'color'].includes(r.effect);
+      return `<div class="lrule ${r.enabled === false ? 'off' : ''}" data-rid="${r.id}">
+        <div class="top"><input type="checkbox" data-f="enabled" ${r.enabled !== false ? 'checked' : ''} style="width:22px;height:22px;accent-color:var(--accent)">
+          <select data-f="trigger">${opt(LTRIG, r.trigger)}</select>
+          <button class="btn small" data-act="test" title="Testen">▶</button><button class="btn small danger" data-act="del">🗑</button></div>
+        <select data-f="effect" style="margin-top:8px">${opt(LEFF, r.effect)}</select>
+        ${usesLights ? `<button class="btn small lpick" data-act="lights">💡 <span>${r.lights.length ? r.lights.map(nm).map(esc).join(', ') : 'Lampen auswählen …'}</span></button>
+          <div class="grid2">${r.effect !== 'rainbow' ? `<label class="colorbox"><input type="color" data-f="color" value="${r.color}"><span>Farbe</span></label>` : '<span></span>'}
+          ${r.effect === 'color' ? `<label class="numbox">Sekunden<input type="number" data-f="seconds" min="1" max="60" value="${r.seconds}"></label>`
+            : `<label class="numbox">Wiederh.<input type="number" data-f="count" min="1" max="10" value="${r.count}"></label>`}</div>` : ''}
+        ${r.effect === 'scene' ? `<select data-f="scene" style="margin-top:8px">${ent(LFX.scenes, r.scene, 'Szene wählen …')}</select>` : ''}
+        ${r.effect === 'script' ? `<select data-f="script" style="margin-top:8px">${ent(LFX.scripts, r.script, 'Skript wählen …')}</select>
+          <p class="muted" style="margin:6px 0 0;font-size:12px">Das Skript bekommt die Variablen event, player, value, total …</p>` : ''}
+      </div>`; }).join('') || '<p class="muted">Noch keine Regeln.</p>'}</div>
+    <div class="row"><button class="btn grow" id="ladd">➕ Regel</button><button class="btn grow" id="lpreset">✨ Vorschläge</button></div>
+    <button class="btn primary" id="lsave" style="width:100%;margin-top:12px">💾 Lichteffekte speichern</button>`;
+  const rule = el => C.rules.find(r => r.id === el.closest('[data-rid]').dataset.rid);
+  $('#lfxon').onchange = e => { C.enabled = e.target.checked; };
+  box.querySelectorAll('[data-f]').forEach(el => el.onchange = () => {
+    const r = rule(el), f = el.dataset.f;
+    r[f] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? +el.value : el.value;
+    if (f === 'effect' || f === 'enabled') renderLightFx();
+  });
+  box.querySelectorAll('[data-act=del]').forEach(b => b.onclick = () => { C.rules = C.rules.filter(r => r !== rule(b)); renderLightFx(); });
+  box.querySelectorAll('[data-act=lights]').forEach(b => b.onclick = () => pickLights(rule(b).lights, sel => { rule(b).lights = sel; renderLightFx(); }));
+  box.querySelectorAll('[data-act=test]').forEach(b => b.onclick = async () => {
+    const r = rule(b); b.disabled = true; b.textContent = '…';
+    try { await call('POST', 'lightfx/test', r); toast('Effekt ausgeführt 💡'); } catch {} finally { b.disabled = false; b.textContent = '▶'; }
+  });
+  $('#ladd').onclick = () => { const used = C.rules.map(r => r.trigger), t = (LTRIG.find(([k]) => !used.includes(k)) || LTRIG[0])[0];
+    C.rules.push({ id: ruleId(), trigger: t, effect: 'flash', lights: C.rules[C.rules.length - 1]?.lights || [], color: '#ffc400', count: 3, seconds: 3, enabled: true }); renderLightFx(); };
+  $('#lpreset').onclick = () => pickLights([], sel => {
+    if (!sel.length) return toast('Bitte mindestens eine Lampe wählen');
+    const P = [['grande_served', 'rainbow', '#ffc400', 2], ['grande', 'flash', '#ffc400', 3], ['poker', 'pulse', '#a855f7', 2], ['full', 'color', '#38bdf8', 1],
+      ['strike', 'flash', '#ff2020', 1], ['leader_changed', 'pulse', '#ffc400', 1], ['game_finished', 'rainbow', '#ffc400', 3]];
+    for (const [t, e, c, n] of P) if (!C.rules.some(r => r.trigger === t)) C.rules.push({ id: ruleId(), trigger: t, effect: e, lights: sel, color: c, count: n, seconds: 3, enabled: true });
+    renderLightFx(); toast('Vorschläge hinzugefügt – jetzt speichern');
+  }, 'Welche Lampen sollen mitmachen?');
+  $('#lsave').onclick = async () => { LFX.config = await call('PUT', 'lightfx', C); toast('Lichteffekte gespeichert 💡'); renderLightFx(); };
+}
+function pickLights(current, done, title = 'Lampen auswählen') {
+  const sel = new Set(current);
+  $('#sheet').innerHTML = `<h3>💡 ${title}</h3><input type="text" class="lsearch" id="lq" placeholder="Suchen …">
+    <div class="llist" id="ll"></div><button class="btn primary" id="lok" style="width:100%;margin-top:12px">Übernehmen</button>`;
+  const draw = () => {
+    const q = $('#lq').value.toLowerCase();
+    $('#ll').innerHTML = LFX.lights.filter(l => !q || l.name.toLowerCase().includes(q) || l.id.includes(q)).map(l =>
+      `<label class="litem"><input type="checkbox" value="${l.id}" ${sel.has(l.id) ? 'checked' : ''}><span class="swatch ${l.color ? '' : 'mono'}"></span>
+        <div class="grow">${esc(l.name)}<small>${l.id}${l.color ? '' : ' · nur Helligkeit'}</small></div></label>`).join('') || '<p class="muted">Keine Lampen gefunden.</p>';
+    $('#ll').querySelectorAll('input').forEach(i => i.onchange = () => i.checked ? sel.add(i.value) : sel.delete(i.value));
+  };
+  $('#lq').oninput = draw; draw(); openSheet();
+  $('#lok').onclick = () => { closeSheet(); done([...sel]); };
+}
+
 async function bindIntegrations() {
+  bindLightFx();
   const box = $('#intg'); if (!box) return;
   const I = await call('GET', 'integrations');
   const evs = (k, cur) => Object.keys(EVN).map(e => `<label class="switch"><span>${EVN[e]}</span><input type="checkbox" data-ev="${k}.${e}" ${cur[e] ? 'checked' : ''}></label>`).join('');

@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -46,6 +46,7 @@ const DEFAULT_INTEGRATIONS = {
   ha: { url: '', events: { game_started: true, score: true, grande: true, leader_changed: true, game_finished: true, trophy: true, level_up: true } },
   pixelit: { url: '', back: 15, events: { game_started: true, score: true, grande: true, leader_changed: true, game_finished: true, trophy: true, level_up: true } },
 };
+db.lightfx ||= { enabled: true, rules: [] };
 db.integrations = {
   ha: { ...DEFAULT_INTEGRATIONS.ha, ...(db.integrations?.ha || {}), events: { ...DEFAULT_INTEGRATIONS.ha.events, ...(db.integrations?.ha?.events || {}) } },
   pixelit: { ...DEFAULT_INTEGRATIONS.pixelit, ...(db.integrations?.pixelit || {}), events: { ...DEFAULT_INTEGRATIONS.pixelit.events, ...(db.integrations?.pixelit?.events || {}) } },
@@ -187,7 +188,85 @@ async function sendPixelit(screen, holdSec) {
   const back = holdSec ?? Number(db.integrations.pixelit.back);
   if (back > 0) clockTimer = setTimeout(() => post(base + '/api/screen', { switchAnimation: { aktiv: true, animation: 'fade' }, clock: {} }).catch(() => {}), back * 1000);
 }
+// ---------- Lichteffekte direkt über Home Assistant (nur als HA-App) ----------
+const HA_TOKEN = process.env.SUPERVISOR_TOKEN || '';
+const HA_API = process.env.HA_API_URL || 'http://supervisor/core/api';
+const haAvailable = () => !!HA_TOKEN;
+async function ha(pathname, body) {
+  const r = await fetch(HA_API + pathname, {
+    method: body ? 'POST' : 'GET', signal: AbortSignal.timeout(8000),
+    headers: { Authorization: 'Bearer ' + HA_TOKEN, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!r.ok) throw new Error('HA ' + r.status + ' ' + pathname);
+  return r.json().catch(() => ({}));
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const hexRgb = h => { const n = parseInt(String(h || '#ffc400').slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+const RAINBOW = [[255, 0, 0], [255, 140, 0], [255, 230, 0], [0, 220, 60], [0, 160, 255], [120, 60, 255], [255, 0, 200]];
+async function runLightRule(rule, data = {}) {
+  if (!haAvailable()) throw new Error('Nur verfügbar, wenn Würfelpoker als Home-Assistant-App läuft');
+  if (rule.effect === 'scene') { if (rule.scene) await ha('/services/scene/turn_on', { entity_id: rule.scene }); return; }
+  if (rule.effect === 'script') {
+    if (rule.script) await ha('/services/script/turn_on', { entity_id: rule.script, variables: { event: rule.trigger, ...data } });
+    return;
+  }
+  const lights = (rule.lights || []).filter(x => /^light\./.test(x));
+  if (!lights.length) return;
+  // Farbfähige und nicht farbfähige Lampen trennen
+  const states = await Promise.all(lights.map(l => ha('/states/' + l).catch(() => null)));
+  const colorModes = ['hs', 'rgb', 'rgbw', 'rgbww', 'xy'];
+  const col = [], mono = [];
+  states.forEach((st, i) => ((st?.attributes?.supported_color_modes || []).some(m => colorModes.includes(m)) ? col : mono).push(lights[i]));
+  const on = async (rgb, bri, tr = 0) => {
+    const calls = [];
+    if (col.length) calls.push(ha('/services/light/turn_on', { entity_id: col, rgb_color: rgb, brightness_pct: bri, transition: tr }));
+    if (mono.length) calls.push(ha('/services/light/turn_on', { entity_id: mono, brightness_pct: bri, transition: tr }));
+    await Promise.all(calls);
+  };
+  const off = () => ha('/services/light/turn_off', { entity_id: lights, transition: 0 });
+  const snap = 'wuerfelpoker_vorher';
+  await ha('/services/scene/create', { scene_id: snap, snapshot_entities: lights });
+  const rgb = hexRgb(rule.color), n = Math.max(1, Math.min(10, Number(rule.count) || 3));
+  try {
+    switch (rule.effect) {
+      case 'flash': for (let i = 0; i < n; i++) { await on(rgb, 100); await sleep(380); await off(); await sleep(260); } break;
+      case 'pulse': for (let i = 0; i < n; i++) { await on(rgb, 100, 0.6); await sleep(750); await on(rgb, 15, 0.6); await sleep(750); } break;
+      case 'rainbow': for (let i = 0; i < n; i++) for (const c of RAINBOW) { await on(c, 100, 0.3); await sleep(420); } break;
+      case 'color': default: await on(rgb, 100, 0.4); await sleep(Math.max(1, Math.min(60, Number(rule.seconds) || 3)) * 1000);
+    }
+  } finally {
+    await sleep(150);
+    await ha('/services/scene/turn_on', { entity_id: 'scene.' + snap, transition: 0.6 }).catch(e => console.error('Licht zurücksetzen:', e.message));
+  }
+}
+// welcher Auslöser passt zu einem Ereignis? (spezifischster zuerst)
+function lightTriggers(ev, d) {
+  if (ev === 'score') {
+    const t = [];
+    if (d.value === 0) t.push('strike');
+    else {
+      if (d.cat_key === 'grande') t.push(d.served ? 'grande_served' : null, 'grande');
+      if (['poker', 'full', 'strasse'].includes(d.cat_key)) t.push(d.served ? d.cat_key + '_served' : null, d.cat_key);
+      if (d.served) t.push('served');
+      if (d.cat_key === '6' && d.value === 30) t.push('max6');
+    }
+    return t.filter(Boolean);
+  }
+  return ['game_started', 'leader_changed', 'game_finished', 'trophy', 'level_up'].includes(ev) ? [ev] : [];
+}
+let lightChain = Promise.resolve();
+function lightFx(ev, d) {
+  if (!haAvailable() || !db.lightfx?.enabled) return;
+  const rules = db.lightfx.rules.filter(r => r.enabled !== false);
+  for (const t of lightTriggers(ev, d)) {
+    const rule = rules.find(r => r.trigger === t);
+    if (rule) { lightChain = lightChain.then(() => runLightRule(rule, d)).catch(e => console.error('Lichteffekt:', e.message)); return; }
+  }
+}
+
 function emit(ev, data = {}) {
+  lightFx(ev, data);
   const I = db.integrations, payload = { event: ev, time: new Date().toISOString(), ...data };
   if (I.ha.url && I.ha.events[ev]) post(I.ha.url.trim(), payload).catch(e => console.error('Home Assistant:', e.message));
   if (I.pixelit.url && I.pixelit.events[ev] && !(ev === 'score' && data.category === 'Grande' && data.value > 0 && I.pixelit.events.grande)) {
@@ -337,7 +416,7 @@ async function api(req, res, parts) {
 
   // GET /api/state  (ohne Benutzer/Sitzungen)
   if (parts[0] === 'state' && m === 'GET') {
-    const { users, sessions, integrations, ...pub } = db;
+    const { users, sessions, integrations, lightfx, ...pub } = db;
     return send(res, 200, { ...pub, me: publicUser(user) });
   }
 
@@ -430,7 +509,7 @@ async function api(req, res, parts) {
       save();
       if (value !== null && value !== undefined && Number(value) !== old && !g.finished) {
         const v = Number(value), fig = g.figures[cat], served = !!fig && v === fig[1] && v !== fig[0];
-        const base = { game_id: g.id, player: pName(player), category: CAT_LABEL[cat] || cat, value: v, served, column: col + 1,
+        const base = { game_id: g.id, player: pName(player), category: CAT_LABEL[cat] || cat, cat_key: cat, value: v, served, column: col + 1,
           total: playerTotalSrv(g, player), totals: totalsByName(g) };
         const lead = leadersSrv(g);
         emit('score', { ...base, leader: lead.length === 1 ? pName(lead[0]) : null });
@@ -463,6 +542,40 @@ async function api(req, res, parts) {
         tier_name: { b: 'Bronze', s: 'Silber', g: 'Gold', p: 'Platin' }[body.tier], level: body.level, rank: body.rank });
     }
     return send(res, 200, { ok: true });
+  }
+
+  // Lichteffekte (Admin)
+  if (parts[0] === 'lightfx') {
+    if (adminOnly()) return;
+    if (m === 'GET' && !parts[1]) {
+      let lights = [], scenes = [], scripts = [], error = null;
+      if (haAvailable()) {
+        try {
+          const st = await ha('/states');
+          const pick = dom => st.filter(e => e.entity_id.startsWith(dom + '.')).map(e => ({ id: e.entity_id, name: e.attributes.friendly_name || e.entity_id,
+            color: (e.attributes.supported_color_modes || []).some(x => ['hs', 'rgb', 'rgbw', 'rgbww', 'xy'].includes(x)) }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+          lights = pick('light'); scenes = pick('scene').filter(x => x.id !== 'scene.wuerfelpoker_vorher'); scripts = pick('script');
+        } catch (e) { error = e.message; }
+      }
+      return send(res, 200, { available: haAvailable(), error, lights, scenes, scripts, config: db.lightfx });
+    }
+    if (m === 'PUT') {
+      const TR = ['grande_served', 'grande', 'poker_served', 'poker', 'full_served', 'full', 'strasse_served', 'strasse', 'served', 'max6', 'strike',
+        'game_started', 'leader_changed', 'game_finished', 'trophy', 'level_up'];
+      const FX = ['flash', 'pulse', 'rainbow', 'color', 'scene', 'script'];
+      db.lightfx = { enabled: body.enabled !== false, rules: (body.rules || []).filter(r => TR.includes(r.trigger) && FX.includes(r.effect)).slice(0, 40).map(r => ({
+        id: String(r.id || id()), trigger: r.trigger, effect: r.effect, enabled: r.enabled !== false,
+        lights: (r.lights || []).filter(x => /^light\.[\w]+$/.test(x)).slice(0, 30),
+        color: /^#[0-9a-f]{6}$/i.test(r.color) ? r.color : '#ffc400', count: Math.max(1, Math.min(10, Number(r.count) || 3)),
+        seconds: Math.max(1, Math.min(60, Number(r.seconds) || 3)),
+        scene: /^scene\.[\w]+$/.test(r.scene || '') ? r.scene : '', script: /^script\.[\w]+$/.test(r.script || '') ? r.script : '' })) };
+      save(true); return send(res, 200, db.lightfx);
+    }
+    if (parts[1] === 'test' && m === 'POST') {
+      try { await runLightRule(body, { player: 'Test' }); return send(res, 200, { ok: true }); }
+      catch (e) { return send(res, 502, { error: e.message }); }
+    }
   }
 
   // Integrationen (Admin)
@@ -521,7 +634,7 @@ async function api(req, res, parts) {
   // Backup
   if (parts[0] === 'export' && m === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Disposition': 'attachment; filename="wuerfelpoker-backup.json"' });
-    const { users, sessions, integrations, ...pub } = db;
+    const { users, sessions, integrations, lightfx, ...pub } = db;
     return res.end(JSON.stringify(pub, null, 2));
   }
 

@@ -24,6 +24,17 @@ Wer die App ohne Home Assistant öffnen will (z. B. auf einem Tablet am Spieltis
 
 Spiele, Spieler, Profilbilder, Konten und Integrationen werden übernommen.
 
+## 💡 Lichteffekte
+
+Unter **Optionen → Integrationen → Lichteffekte** legst du fest, was deine Lampen bei welchem Wurf machen:
+
+- **Auslöser:** z. B. Grande, Grande serviert, Poker, gestrichen, Führungswechsel, Spielende …
+- **Effekt:** Blinken, Pulsieren, Regenbogen, Farbe kurz anzeigen, Szene oder Skript
+- **Lampen** aus deinem Home Assistant auswählen, Farbe und Wiederholungen einstellen, mit ▶ testen
+
+Nach dem Effekt gehen die Lampen automatisch in ihren vorherigen Zustand zurück.
+Skripte bekommen die Spieldaten als Variablen (`event`, `player`, `value`, `total`, `winner` …).
+
 ## Home-Assistant-Webhook
 
 Unter **Optionen → Integrationen** kann als Webhook-URL direkt die interne Adresse verwendet werden:

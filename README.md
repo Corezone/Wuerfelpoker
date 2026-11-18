@@ -12,6 +12,7 @@ Alle Geräte synchronisieren sich live: Einer trägt am Handy ein, der Fernseher
 - Punktewerte, Spaltenanzahl und optionaler Bonus einstellbar
 - Scoreboard mit Platzierung, Abstand zur Spitze und „am Zug“-Anzeige
 - Trophäen-System im PlayStation-Stil: XP, Level, Ränge, 21 Trophäen (Bronze/Silber/Gold/Platin), Avatar-Rahmen als Belohnung – wird rückwirkend aus allen beendeten Spielen berechnet
+- 💡 Lichteffekte direkt aus Home Assistant (als HA-App): pro Wurf Lampen, Effekt und Farbe per Dropdown wählen
 - Home Assistant: Webhook mit allen Ereignissen (Punkte, Grande, Führung, Sieger, Trophäen) – Beispiel in `docs/homeassistant.yaml`
 - PixelIt: Punkte, GRANDE-Animation, Führungswechsel und Sieger auf der LED-Matrix, danach zurück zur Uhr
 - 3D-Würfel, Karten mit Neige-Effekt, Tasten mit Tiefe, 3D-Podest

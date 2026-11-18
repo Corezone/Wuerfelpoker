@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.8.0 – Lichteffekte
+- **Lichteffekte direkt aus Home Assistant** (nur als HA-App): Lampen, Szenen und Skripte per Dropdown auswählen
+- Regeln pro Wurf: Grande, Grande serviert, Poker, Full House, Straße (jeweils auch serviert), fünf Sechser, gestrichen, Spielstart, Führungswechsel, Spielende, Trophäe, Level-Aufstieg
+- Effekte: Blinken, Pulsieren, Regenbogen, Farbe kurz anzeigen, Szene aktivieren, Skript ausführen (mit Spieldaten als Variablen)
+- Lampen kehren nach dem Effekt automatisch in ihren vorherigen Zustand zurück; Lampen ohne Farbe werden nur hell geschaltet
+- „Vorschläge“ legt mit einem Klick ein fertiges Effekt-Set an, ▶ testet jede Regel sofort
+
 ## v1.7.0 – Home-Assistant-App
 - **Als Home-Assistant-App installierbar:** eigener Eintrag in der Seitenleiste, Anmeldung über Home Assistant
 - Der erste HA-Benutzer wird automatisch Admin; optional Direktzugriff im Heimnetz über Port 8099
