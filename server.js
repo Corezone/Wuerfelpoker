@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.10.0';
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -551,7 +551,7 @@ async function api(req, res, parts) {
     if (m === 'GET') return send(res, 200, { model: db.diceModel || null });
     if (m === 'PUT') {
       const mm = body.model;
-      if (mm && !(Array.isArray(mm.faces) && mm.faces.length === 6 && mm.faces.every(f => Array.isArray(f) && f.length <= 20 && f.every(v => Array.isArray(v) && v.length < 1000))))
+      if (mm && !(Array.isArray(mm.faces) && mm.faces.length === 6 && mm.faces.every(f => Array.isArray(f) && f.length <= 80 && f.every(v => Array.isArray(v) && v.length < 1000))))
         return send(res, 400, { error: 'Ungültige Daten' });
       db.diceModel = mm || null; save(true); return send(res, 200, { ok: true });
     }

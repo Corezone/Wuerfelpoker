@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.10.0 – Kamera-Erkennung zuverlässiger
+- 🎯 **Kein Springen mehr:** echte Bewegungserkennung – erkannt wird erst, wenn die Würfel ruhig liegen, und erst nach einem neuen Wurf wieder. Kurz die Hand drüber zählt nicht als neuer Wurf
+- 🗳️ **Abstimmung über mehrere Bilder** statt eines Schnappschusses; Würfel werden über ihre Position zugeordnet
+- 🔍 **Bessere Symbol-Erkennung:** schärferer Bildausschnitt, Kantenmuster (Form) zusätzlich zu Farbe, Anlernen mit leicht gedrehten/skalierten Varianten
+- ✋ **Antippen zum Korrigieren:** falsch erkannten Würfel antippen, richtige Seite wählen – die App merkt sich das und wird mit jedem Spiel besser
+- ⚠️ Unsichere Würfel werden gelb markiert, Statusanzeige im Kamerabild („Warte, bis die Würfel ruhig liegen“, „Erkenne …“)
+- Anlernen: jede Seite 2× erfassen (Fortschritt 0/2 → ✓). **Einmal neu anlernen nötig**, die App weist darauf hin
+
 ## v1.9.0 – Kamera-Erkennung (Prototyp) & Pokerwürfel
 - 🧪 **PROTOTYP: Würfe mit der Handykamera erkennen** – Würfel werden gefunden, Symbole erkannt und passende Einträge vorgeschlagen (inkl. „serviert“ im 1. Wurf)
 - Anlern-Modus: jede Würfelseite einmal zeigen, die Muster gelten danach für alle Geräte

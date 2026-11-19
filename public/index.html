@@ -543,6 +543,16 @@
   .dc-sugg .btn { flex: 1 1 45%; display: flex; justify-content: space-between; gap: 8px; }
   .dc-sugg .btn b { font-family: var(--display); }
   .dc-wait { text-align: center; padding: 18px 6px; color: var(--muted); }
+  .dc-status { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; background: rgba(0,0,0,.6);
+    font-size: 13px; font-weight: 600; white-space: nowrap; pointer-events: none; }
+  .dc-status:empty { display: none; }
+  button.dc-die { border: 0; cursor: pointer; }
+  .dc-res.still .dc-die { animation: none; }
+  .dc-die.fixing { box-shadow: 0 4px 0 #a99c78, 0 0 0 3px #7dd3fc; transform: translateY(-3px); }
+  .dc-fix { display: flex; align-items: center; gap: 5px; justify-content: center; flex-wrap: wrap; margin: 6px 0; padding: 8px; border-radius: 12px; background: rgba(125,211,252,.12); border: 1px solid rgba(125,211,252,.4); }
+  .dc-fix span { font-size: 12.5px; color: #bae6fd; margin-right: 4px; }
+  .dc-fix button { min-width: 40px; height: 38px; border-radius: 10px; border: 0; background: linear-gradient(160deg, #fffdf6, #e2d8bd); color: #14281c; font: 900 16px var(--display); cursor: pointer; box-shadow: 0 3px 0 #a99c78; }
+  .dc-note { margin: 6px 0; padding: 8px 10px; border-radius: 10px; background: rgba(242,207,99,.15); border: 1px solid rgba(242,207,99,.4); color: var(--gold); font-size: 13px; }
 </style>
 </head>
 <body>

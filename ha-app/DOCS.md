@@ -28,9 +28,10 @@ Spiele, Spieler, Profilbilder, Konten und Integrationen werden übernommen.
 
 Im Spiel auf **„📷 Würfe mit Kamera erkennen“** tippen.
 
-1. **Einmal anlernen:** alle Würfel mit derselben Seite nach oben hinlegen, Seite wählen, „Erfassen“ – für jede Seite (9, 10, B, D, K, A).
+1. **Einmal anlernen:** alle Würfel mit derselben Seite nach oben hinlegen, Seite wählen, „Erfassen“ – für jede Seite (9, 10, B, D, K, A) **2×**, beim zweiten Mal die Würfel etwas verschieben.
 2. **Würfeln:** Handy von oben über die Würfel halten. Sobald sie ruhig liegen, werden sie erkannt und passende Einträge vorgeschlagen.
 3. Vorschlag antippen – fertig. Der nächste Spieler ist automatisch dran.
+4. **Falsch erkannt?** Würfel antippen und die richtige Seite wählen – die App lernt dabei mit. Gelb markierte Würfel sind unsicher.
 
 Tipps: helle Würfel auf dunklem, nicht glänzendem Untergrund, gutes Licht, Würfel nicht aneinander.
 Die Kamera funktioniert nur über **HTTPS** (z. B. Home-Assistant-App mit Nabu Casa).
